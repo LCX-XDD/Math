@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数字记忆挑战</title>
+    <!-- 浏览器标签 Favicon 核心代码 -->
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/16/2906/2906299.png" type="image/png">
+    <link rel="shortcut icon" href="https://cdn-icons-png.flaticon.com/16/2906/2906299.png" type="image/png">
+    <!-- 适配高分辨率设备（可选） -->
+    <link rel="icon" sizes="32x32" href="https://cdn-icons-png.flaticon.com/16/2906/2906299.png" type="image/png">
+    <link rel="icon" sizes="16x16" href="https://cdn-icons-png.flaticon.com/16/2906/2906299.png" type="image/png">
+    <!-- 移动端应用图标（可选，添加后手机保存书签时显示图标） -->
+    <link rel="apple-touch-icon" sizes="180x180" href="https://cdn-icons-png.flaticon.com/16/2906/2906299.png">
+    <meta name="apple-mobile-web-app-title" content="数字记忆挑战">
+    <link rel="stylesheet" href="css/style.css">
+      <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.15.0/dist/av-min.js"></script>
+  <script>
+    // 初始化 LeanCloud（替换为你的应用凭证）
+    AV.init({
+      appId: "BEQfGnHF8BeBEFO88ViNPtKQ-gzGzoHsz",
+      appKey: "3svRKA7Hb5dbNmmrN2OGViqq",
+      serverURL: "https://BEQfGnHF8BeBEFO88ViNPtKQ-gzGzoHsz.lc-cn-n1-shared.com"
+    });
+  </script>
+</head>
+<body>
+    <!-- 新增：登录弹窗 -->
+    <div class="auth-modal" id="login-modal">
+        <div class="auth-content">
+            <h2>📱 账号登录</h2>
+            <div class="auth-form">
+                <div class="form-group">
+                    <label>账号</label>
+                    <input type="text" id="login-account" placeholder="请输入注册的账号" required>
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="login-password" placeholder="请输入密码" required>
+                </div>
+                <div class="auth-msg" id="login-msg"></div>
+                <button class="auth-btn" id="do-login">登录</button>
+                <div class="auth-switch">
+                    还没有账号？<a href="javascript:;" id="go-register">立即注册</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增：注册弹窗 -->
+    <div class="auth-modal" id="register-modal" style="display: none;">
+        <div class="auth-content">
+            <h2>📝 账号注册</h2>
+            <div class="auth-form">
+                <div class="form-group">
+                    <label>用户名（排行榜显示）</label>
+                    <input type="text" id="register-username" placeholder="请设置用户名" required>
+                </div>
+                <div class="form-group">
+                    <label>账号（登录凭证）</label>
+                    <input type="text" id="register-account" placeholder="请设置账号（如手机号/邮箱）" required>
+                </div>
+                <div class="form-group">
+                    <label>密码（登录凭证）</label>
+                    <input type="password" id="register-password" placeholder="请设置密码（不少于6位）" required>
+                </div>
+                <div class="auth-msg" id="register-msg"></div>
+                <button class="auth-btn" id="do-register">注册</button>
+                <div class="auth-switch">
+                    已有账号？<a href="javascript:;" id="go-login">立即登录</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏内容（默认隐藏，登录后显示） -->
+    <div class="game-container" id="game-container" style="display: none;">
+        <!-- 顶部分数栏（总累计分+当前分数） -->
+        <div class="top-score-bar">
+            <div class="total-accumulated-score">
+                总累计分：<span id="total-accumulated-score">0</span>
+            </div>
+            <div class="current-score">
+                当前分数：<span id="current-score">0</span>
+            </div>
+        </div>
+
+        <h1>数字记忆挑战 🧠</h1>
+        <p class="game-desc">选择难度后点击开始游戏，将显示对应位数的随机数字，记住并输入正确答案 ✨</p>
+        
+        <!-- 难度选择区域 -->
+        <div class="difficulty-selection">
+            <label>选择难度 <span class="emoji">🎯</span>：</label>
+            <div class="select-wrapper">
+                <select id="difficulty-select" class="difficulty-select">
+                    <option value="easy">简单 📱</option>
+                    <option value="medium">中等 📝</option>
+                    <option value="hard">困难 📞</option>
+                    <option value="hell">地狱 🆔</option>
+                </select>
+            </div>
+            <span class="difficulty-hint" id="difficulty-hint-text">相当于短验证码</span>
+        </div>
+        
+        <!-- 数字显示区域 -->
+        <div class="number-display">?</div>
+        <div class="countdown-hint" id="countdown-hint">准备开始记忆...</div>
+        
+        <!-- 游戏控制区 -->
+        <div class="controls">
+            <button id="start-btn" class="btn">开始游戏 🚀</button>
+            <input type="number" id="answer-input" placeholder="输入4位数字" disabled>
+            <button id="submit-btn" class="btn" disabled>提交答案 ✅</button>
+            <button id="ranking-btn" class="btn">排行榜 🏆</button>
+            <!-- 新增：退出登录按钮 -->
+            <button id="logout-btn" class="btn">退出登录 🚪</button>
+        </div>
+
+        <!-- 底部统计栏（总游戏次数+正确率） -->
+        <div class="bottom-stats-bar">
+            <div class="total-games">
+                总游戏次数：<span id="total-games">0</span>
+            </div>
+            <div class="accuracy">
+                总正确率：<span id="accuracy">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/game.js"></script>
+</body>
+</html>
