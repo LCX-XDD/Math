@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数字记忆挑战</title>
+    <link rel="stylesheet" href="css/style.css">
     <!-- 浏览器标签 Favicon 核心代码 -->
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/16/2906/2906299.png" type="image/png">
     <link rel="shortcut icon" href="https://cdn-icons-png.flaticon.com/16/2906/2906299.png" type="image/png">
@@ -13,7 +14,6 @@
     <!-- 移动端应用图标（可选，添加后手机保存书签时显示图标） -->
     <link rel="apple-touch-icon" sizes="180x180" href="https://cdn-icons-png.flaticon.com/16/2906/2906299.png">
     <meta name="apple-mobile-web-app-title" content="数字记忆挑战">
-    <link rel="stylesheet" href="css/style.css">
       <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.15.0/dist/av-min.js"></script>
   <script>
     // 初始化 LeanCloud（替换为你的应用凭证）
@@ -26,52 +26,56 @@
 </head>
 <body>
     <!-- 新增：登录弹窗 -->
-    <div class="auth-modal" id="login-modal">
-        <div class="auth-content">
-            <h2>📱 账号登录</h2>
-            <div class="auth-form">
-                <div class="form-group">
-                    <label>账号</label>
-                    <input type="text" id="login-account" placeholder="请输入注册的账号" required>
-                </div>
-                <div class="form-group">
-                    <label>密码</label>
-                    <input type="password" id="login-password" placeholder="请输入密码" required>
-                </div>
-                <div class="auth-msg" id="login-msg"></div>
-                <button class="auth-btn" id="do-login">登录</button>
-                <div class="auth-switch">
-                    还没有账号？<a href="javascript:;" id="go-register">立即注册</a>
-                </div>
-            </div>
-        </div>
+    <!-- 登录弹窗 -->
+<div id="login-modal" class="auth-modal">
+  <div class="auth-content">
+    <h2>🔐 登录</h2>
+    <div class="auth-form">
+      <!-- 给输入框添加 ID：login-account、login-password -->
+      <div class="form-group">
+        <label>账号</label>
+        <input type="text" id="login-account" placeholder="请输入账号">
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input type="password" id="login-password" placeholder="请输入密码">
+      </div>
+      <div class="auth-msg" id="login-msg"></div>
+      <button class="auth-btn" id="do-login">登录</button>
+      <div class="auth-switch">
+        还没有账号？<a href="javascript:;" id="go-register">立即注册</a>
+      </div>
     </div>
+  </div>
+</div>
 
     <!-- 新增：注册弹窗 -->
-    <div class="auth-modal" id="register-modal" style="display: none;">
-        <div class="auth-content">
-            <h2>📝 账号注册</h2>
-            <div class="auth-form">
-                <div class="form-group">
-                    <label>用户名（排行榜显示）</label>
-                    <input type="text" id="register-username" placeholder="请设置用户名" required>
-                </div>
-                <div class="form-group">
-                    <label>账号（登录凭证）</label>
-                    <input type="text" id="register-account" placeholder="请设置账号（如手机号/邮箱）" required>
-                </div>
-                <div class="form-group">
-                    <label>密码（登录凭证）</label>
-                    <input type="password" id="register-password" placeholder="请设置密码（不少于6位）" required>
-                </div>
-                <div class="auth-msg" id="register-msg"></div>
-                <button class="auth-btn" id="do-register">注册</button>
-                <div class="auth-switch">
-                    已有账号？<a href="javascript:;" id="go-login">立即登录</a>
-                </div>
-            </div>
-        </div>
+    <!-- 注册弹窗 -->
+<div id="register-modal" class="auth-modal" style="display: none;">
+  <div class="auth-content">
+    <h2>📱 注册</h2>
+    <div class="auth-form">
+      <!-- 给输入框添加 ID：register-name、register-account、register-password -->
+      <div class="form-group">
+        <label>用户名</label>
+        <input type="text" id="register-name" placeholder="请输入用户名">
+      </div>
+      <div class="form-group">
+        <label>账号</label>
+        <input type="text" id="register-account" placeholder="请输入账号">
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input type="password" id="register-password" placeholder="请输入密码（≥6位）">
+      </div>
+      <div class="auth-msg" id="register-msg"></div>
+      <button class="auth-btn" id="do-register">注册</button>
+      <div class="auth-switch">
+        已有账号？<a href="javascript:;" id="go-login">立即登录</a>
+      </div>
     </div>
+  </div>
+</div>
 
     <!-- 游戏内容（默认隐藏，登录后显示） -->
     <div class="game-container" id="game-container" style="display: none;">
@@ -126,7 +130,6 @@
             </div>
         </div>
     </div>
-
     <script src="js/game.js"></script>
 </body>
 </html>

@@ -428,37 +428,43 @@ h1::after, h1::before {
 
 /* 倒计时提示框样式 */
 .countdown-hint {
+  color: var(--text-secondary);
+  font-size: calc(var(--font-base) * 0.9);
+  margin: calc(var(--spacing-base) * 0.5) 0;
+  text-align: center;
+  transition: var(--transition);
+  opacity: 1; /* 初始显示，避免空白 */
+}
+
+/* 游戏未开始时的提示样式 */
+.countdown-hint.initial {
+    font-style: italic;
     color: var(--text-secondary);
-    font-size: calc(var(--font-base) * 0.9);
-    margin: calc(var(--spacing-base) * 0.5) 0;
-    text-align: center;
-    transition: var(--transition);
-    opacity: 0; /* 默认隐藏 */
 }
 
 /* 倒计时显示状态 */
 .countdown-hint.active {
-    opacity: 1;
-    animation: pulse 1s infinite alternate;
+  opacity: 1;
+  animation: pulse 1s infinite alternate;
 }
 
 /* 倒计时脉冲动画（最后1秒加速） */
 @keyframes pulse {
-    from {
-        transform: scale(1);
-        color: var(--text-secondary);
-    }
-    to {
-        transform: scale(1.05);
-        color: var(--primary);
-    }
+  from {
+    transform: scale(1);
+    color: var(--text-secondary);
+  }
+  to {
+    transform: scale(1.05);
+    color: var(--primary);
+  }
 }
 
 /* 最后1秒倒计时高亮 */
 .countdown-hint.final-count {
-    color: var(--danger);
-    font-weight: 600;
-    font-size: calc(var(--font-base) * 1);
+  color: var(--danger);
+  font-weight: 600;
+  font-size: calc(var(--font-base) * 1);
 }
 
 /* 2. 移动端（≤ 767px）- 小屏幕 */
@@ -943,4 +949,157 @@ h1::after, h1::before {
         padding: calc(var(--spacing-base) * 1.5);
         max-width: 95%;
     }
+}
+
+/* 胜利/结果弹窗样式（和其他弹窗统一，避免冲突） */
+.result-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* 最高层级，确保在所有弹窗上方 */
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition);
+  padding: var(--spacing-base);
+}
+
+.result-modal.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.result-content {
+  background: var(--card-bg);
+  padding: calc(var(--spacing-base) * 2) calc(var(--spacing-base) * 1.5);
+  border-radius: var(--border-radius);
+  text-align: center;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+  transform: translateY(30px) scale(0.95);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.result-modal.active .result-content {
+  transform: translateY(0) scale(1);
+}
+
+/* 弹窗顶部渐变条（和其他弹窗统一） */
+.result-content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%);
+}
+
+/* 弹窗标题 */
+.result-content h3 {
+  color: var(--primary-dark);
+  margin: 0 0 calc(var(--spacing-base) * 1.2) 0;
+  font-size: calc(var(--font-base) * 1.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* 弹窗详情文本（和其他弹窗统一） */
+.result-details {
+  background: linear-gradient(135deg, #f8fafc 0%, #f0f4ff 100%);
+  padding: calc(var(--spacing-base) * 1.2);
+  border-radius: var(--border-radius);
+  margin: calc(var(--spacing-base) * 1.2) 0;
+  text-align: left;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.05);
+  max-width: 100%;
+}
+
+.result-details p {
+  margin: calc(var(--spacing-base) * 0.7) 0;
+  font-size: calc(var(--font-base) * 1.05);
+  color: var(--text-primary);
+  line-height: 1.8;
+  word-break: break-all;
+}
+
+/* 弹窗按钮（和其他弹窗统一） */
+.result-btn {
+  padding: calc(var(--spacing-base) * 0.8) calc(var(--spacing-base) * 1.7);
+  border: none;
+  border-radius: var(--border-radius);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: white;
+  font-size: calc(var(--font-base) * 1.05);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+  width: 100%;
+  max-width: 200px;
+  margin: 0 auto;
+}
+
+.result-btn:hover {
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
+/* 继续/结束按钮样式区分 */
+.result-btn.continue {
+  background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+.result-btn.continue:hover {
+  background: linear-gradient(135deg, #34d399 0%, var(--success) 100%);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.result-btn.end {
+  background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+.result-btn.end:hover {
+  background: linear-gradient(135deg, #f87171 0%, var(--danger) 100%);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+/* 弹窗按钮容器（统一所有弹窗按钮布局） */
+.result-btn-container, .modal-buttons {
+    display: flex;
+    gap: calc(var(--spacing-base) * 1.2);
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: calc(var(--spacing-base) * 1.5);
+}
+
+.number-display {
+    /* 原有样式不变 */
+    word-break: break-all; /* 强制长数字换行 */
+    white-space: pre-wrap; /* 保留空格并换行 */
+    line-height: 1.4; /* 增加行高，避免换行后拥挤 */
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15); /* 和游戏输入框一致 */
+    background: white;
+    transform: scale(1.01); /* 轻微放大，提升交互感 */
 }
