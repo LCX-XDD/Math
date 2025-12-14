@@ -643,11 +643,25 @@ async function showRankingModal() {
     rankingData.forEach((item, index) => {
       const listItem = document.createElement('li');
       listItem.className = 'ranking-item';
+      
+      // 核心新增：判断当前条目是否是登录用户
+      const isCurrentUser = item.username === userState.username;
+      
+      // 渲染时添加「我」的标注（小字号灰色）
       listItem.innerHTML = `
         <span class="ranking-rank">${index + 1}</span>
-        <span class="ranking-username">${item.username}</span>
+        <span class="ranking-username">
+          ${item.username}
+          ${isCurrentUser ? '<span class="current-user-tag">我</span>' : ''}
+        </span>
         <span class="ranking-score">${item.score} 分</span>
       `;
+      
+      // 可选：给当前用户条目加高亮样式
+      if (isCurrentUser) {
+        listItem.classList.add('current-user-item');
+      }
+      
       rankingList.appendChild(listItem);
     });
   }
@@ -759,4 +773,5 @@ function startCountdown(countdownEl) {
       countdownEl.classList.remove('final-count');
     }
   }, 1000);
+
 }
