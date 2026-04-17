@@ -1,3 +1,27 @@
+/* 全局加载动画 */
+#global-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+}
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255,255,255,0.2);
+  border-left-color: #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { color: white; font-size: 16px; }
+
+
 /* 全局样式重置 */
 * {
     margin: 0;
@@ -196,6 +220,22 @@ h1::after, h1::before {
     background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
     box-shadow: 0 0 20px rgba(99, 102, 241, 0.2), inset 0 4px 6px rgba(0, 0, 0, 0.05);
     transform: scale(1.02);
+}
+
+/* 数字快消失时的若隐若现效果 */
+.number-display.fade-out {
+  animation: fadeOut 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0.2;
+    transform: scale(0.98);
+  }
 }
 
 /* 控制区域 */
@@ -1009,7 +1049,7 @@ h1::after, h1::before {
 .result-content h3 {
   color: var(--primary-dark);
   margin: 0 0 calc(var(--spacing-base) * 1.2) 0;
-  font-size: calc(var(--font-base) * 1.5);
+    font-size: calc(var(--font-base) * 1.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1180,4 +1220,58 @@ h1::after, h1::before {
 .current-user-item {
   background-color: #f0f7ff !important;
   border-left: 3px solid #007aff !important;
+}
+
+/* 管理员面板手机端适配 */
+@media (max-width: 767px) {
+  .admin-panel {
+    padding: 10px;
+  }
+  .admin-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .admin-header h2 {
+    font-size: 1.2rem;
+  }
+  .admin-table-container {
+    padding: 10px;
+    overflow-x: auto; /* 允许横向滚动 */
+  }
+  .admin-table {
+    min-width: 900px; /* 保证表格在小屏幕下有足够宽度，避免内容挤压 */
+  }
+  .admin-table th, 
+  .admin-table td {
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+  .admin-table th {
+    font-size: 11px;
+  }
+  /* 调整管理员面板按钮大小 */
+  .admin-header .btn {
+    width: 100%;
+    max-width: 200px;
+  }
+}
+
+/* 个人中心 */
+#profile-modal p {
+  margin: 8px 0;
+  font-size: 15px;
+}
+#edit-nickname-btn:hover {
+  color: #6366f1;
+  transform: scale(1.1);
+}
+.record-item {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+.record-item .right {
+  float: right;
+  color: #666;
 }
