@@ -1132,3 +1132,52 @@ h1::after, h1::before {
   flex: 1;
   margin: 0 10px;
 }
+/* 管理员面板样式 */
+.admin-panel {
+  width: 100vw;
+  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+  background: #f8fafc;
+}
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.admin-table-container {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px #00000010;
+  overflow-x: auto;
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.admin-table th, .admin-table td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
+.admin-table th {
+  background: #f1f5f9;
+  color: #333;
+}
+.admin-btn {
+  background: #6366f1 !important;
+}
+
+.current-user-tag {
+  font-size: 12px;
+  color: #888;
+  margin-left: 6px;
+  font-weight: normal;
+}
+
+.current-user-item {
+  background-color: #f0f7ff !important;
+  border-left: 3px solid #007aff !important;
+}

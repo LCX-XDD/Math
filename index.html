@@ -27,11 +27,11 @@
 <body>
     <!-- 新增：登录弹窗 -->
     <!-- 登录弹窗 -->
+<!-- 登录弹窗 -->
 <div id="login-modal" class="auth-modal">
-  <div class="auth-content">
+  <div class="auth-content" style="position: relative;">
     <h2>🔐 登录</h2>
     <div class="auth-form">
-      <!-- 给输入框添加 ID：login-account、login-password -->
       <div class="form-group">
         <label>账号</label>
         <input type="text" id="login-account" placeholder="请输入账号">
@@ -42,6 +42,26 @@
       </div>
       <div class="auth-msg" id="login-msg"></div>
       <button class="auth-btn" id="do-login">登录</button>
+      
+      <!-- 👇 新增：管理员入口按钮 -->
+<button 
+  class="auth-btn admin-btn" 
+  id="go-admin" 
+  style="
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    color: #aaa;
+    border: none;
+    font-size: 11px;
+    padding: 4px 6px;
+    cursor: pointer;
+    opacity: 0.5;
+  "
+>
+  管理
+</button>
       <div class="auth-switch">
         还没有账号？<a href="javascript:;" id="go-register">立即注册</a>
       </div>
@@ -68,6 +88,10 @@
         <label>密码</label>
         <input type="password" id="register-password" placeholder="请输入密码（≥6位）">
       </div>
+        <div class="form-group">
+          <label>找回密码邮箱</label>
+          <input type="email" id="register-email" placeholder="请输入你的邮箱（用于找回密码）">
+        </div>
       <div class="auth-msg" id="register-msg"></div>
       <button class="auth-btn" id="do-register">注册</button>
       <div class="auth-switch">
@@ -131,5 +155,32 @@
         </div>
     </div>
     <script src="js/game.js"></script>
+   <!-- ====================== 管理员面板 ====================== -->
+<div id="admin-panel" class="admin-panel" style="display:none;">
+  <div class="admin-header">
+    <h2>🔐 管理员后台 - 全部用户数据</h2>
+    <button id="exit-admin" class="btn">退出管理员面板</button>
+  </div>
+  <div class="admin-table-container">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>排名</th>
+          <th>用户名</th>
+          <th>登录账号</th>
+         <th>绑定邮箱</th> 
+          <th>总分</th>
+          <th>游戏次数</th>
+          <th>正确率</th>
+          <th>用户ID</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="admin-user-list">
+        <tr><td colspan="8">加载中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 </body>
 </html>
