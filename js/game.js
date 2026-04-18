@@ -575,11 +575,14 @@ function showResultModal(ok, correct, score, len, wrong, a, b) {
 
   const info = document.createElement('div');
   info.className = 'detail-info';
+  // 🔥 优化：正确数字、用户答案 各占一行，长数字自动换行
   info.innerHTML = `
     <p>正确：${correct}/${len}</p>
     <p>本轮得分：${score}</p>
-    <p style="margin-top:10px;">✅ 正确数字：${correctHtml}</p>
-    <p>🖊️ 你的答案：${userHtml}</p>
+    <p style="margin-top:10px;">✅ 正确数字：</p>
+    <p style="word-break:break-all;line-height:1.6;">${correctHtml}</p>
+    <p style="margin-top:8px;">🖊️ 你的答案：</p>
+    <p style="word-break:break-all;line-height:1.6;">${userHtml}</p>
   `;
 
   const btns = document.createElement('div');
@@ -606,7 +609,6 @@ function showResultModal(ok, correct, score, len, wrong, a, b) {
   document.body.append(m);
   setTimeout(() => m.classList.add('active'), 10);
 }
-
 
 function initRankingBtn() {
   rankingBtn.onclick = showRankingModal;
