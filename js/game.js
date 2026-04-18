@@ -83,6 +83,29 @@ function initGlobalElements() {
   registerAccount = document.getElementById('register-account');
   registerPassword = document.getElementById('register-password');
   registerEmail = document.getElementById('register-email');
+
+// ========== 全新需求：问号框显示输入位数，不显示0，空则显示？ ==========
+// 输入框输入事件：实时更新顶部数字框
+answerInput.addEventListener('input', () => {
+  const len = answerInput.value.length;
+  // 有输入数字 → 显示位数；没输入 → 显示问号
+  numberDisplay.textContent = len > 0 ? len : '?';
+});
+
+// 点击输入框聚焦（输入状态）→ 空的时候保持问号，不显示0
+answerInput.addEventListener('focus', () => {
+  const len = answerInput.value.length;
+  if(len === 0) numberDisplay.textContent = '?';
+});
+
+// 提交答案/清空后 → 恢复问号
+const oldCheckAnswer = checkAnswer;
+checkAnswer = function(){
+  oldCheckAnswer();
+  numberDisplay.textContent = '?';
+}
+
+
 }
 
 // 验证当前用户是否真实存在于数据库（被删除则自动登出）
@@ -516,6 +539,8 @@ function updateStatsDisplay() {
   accuracyEl.textContent = gameState.accuracy + '%';
 }
 
+
+
 function showResultModal(ok, correct, score, len, wrong, a, b) {
   document.querySelectorAll('.modal,.result-modal').forEach(x => x.remove());
   const m = document.createElement('div');
@@ -526,25 +551,25 @@ function showResultModal(ok, correct, score, len, wrong, a, b) {
   t.textContent = ok ? '🎉 挑战成功' : '⚠️ 挑战失败';
   t.style.color = ok ? '#10b981' : '#ef4444';
 
-  // ========== 核心：生成带颜色的数字对比 ==========
+  // ========== 核心：生成带颜色的数字对比（字号变小） ==========
   const userAnswer = answerInput.value.trim();
   const correctAnswer = gameState.targetNumber;
 
-  // 正确数字（全部绿色）
+  // 正确数字（全部绿色 + 小字号）
   let correctHtml = '';
   for (let ch of correctAnswer) {
-    correctHtml += `<span style="color:#10b981; font-weight:bold; margin:0 2px;">${ch}</span>`;
+    correctHtml += `<span style="color:#10b981; font-weight:bold; margin:0 1px; font-size:14px;">${ch}</span>`;
   }
 
-  // 用户答案（正确绿、错误红）
+  // 用户答案（正确绿、错误红 + 小字号）
   let userHtml = '';
   for (let i = 0; i < userAnswer.length; i++) {
     const u = userAnswer[i] || '';
     const cor = correctAnswer[i] || '';
     if (u === cor) {
-      userHtml += `<span style="color:#10b981; font-weight:bold; margin:0 2px;">${u}</span>`;
+      userHtml += `<span style="color:#10b981; font-weight:bold; margin:0 1px; font-size:14px;">${u}</span>`;
     } else {
-      userHtml += `<span style="color:#ef4444; font-weight:bold; margin:0 2px;">${u}</span>`;
+      userHtml += `<span style="color:#ef4444; font-weight:bold; margin:0 1px; font-size:14px;">${u}</span>`;
     }
   }
 
@@ -581,6 +606,8 @@ function showResultModal(ok, correct, score, len, wrong, a, b) {
   document.body.append(m);
   setTimeout(() => m.classList.add('active'), 10);
 }
+
+
 function initRankingBtn() {
   rankingBtn.onclick = showRankingModal;
 }
