@@ -1266,12 +1266,23 @@ h1::after, h1::before {
   color: #6366f1;
   transform: scale(1.1);
 }
+/* 个人中心游戏记录 - 单行不换行 + 加大行距间距 */
 .record-item {
-  padding: 10px;
+  padding: 12px 14px;       /* 上下内边距加大，行距变大 */
   border-bottom: 1px solid #eee;
   font-size: 14px;
+  line-height: 1.6;          /* 文字行高加大 */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;                 /* 左右内容间距加大 */
+  white-space: nowrap;       /* 强制**不换行**！永远同一行 */
+  overflow: hidden;         /* 超长文字自动隐藏，不乱跑 */
 }
+
 .record-item .right {
-  float: right;
+  float: none;
   color: #666;
+  white-space: nowrap;
+  flex-shrink: 0;           /* 时间固定宽度，绝不被挤压变形 */
 }

@@ -525,9 +525,38 @@ function showResultModal(ok, correct, score, len, wrong, a, b) {
   const t = document.createElement('h2');
   t.textContent = ok ? '🎉 挑战成功' : '⚠️ 挑战失败';
   t.style.color = ok ? '#10b981' : '#ef4444';
+
+  // ========== 核心：生成带颜色的数字对比 ==========
+  const userAnswer = answerInput.value.trim();
+  const correctAnswer = gameState.targetNumber;
+
+  // 正确数字（全部绿色）
+  let correctHtml = '';
+  for (let ch of correctAnswer) {
+    correctHtml += `<span style="color:#10b981; font-weight:bold; margin:0 2px;">${ch}</span>`;
+  }
+
+  // 用户答案（正确绿、错误红）
+  let userHtml = '';
+  for (let i = 0; i < userAnswer.length; i++) {
+    const u = userAnswer[i] || '';
+    const cor = correctAnswer[i] || '';
+    if (u === cor) {
+      userHtml += `<span style="color:#10b981; font-weight:bold; margin:0 2px;">${u}</span>`;
+    } else {
+      userHtml += `<span style="color:#ef4444; font-weight:bold; margin:0 2px;">${u}</span>`;
+    }
+  }
+
   const info = document.createElement('div');
   info.className = 'detail-info';
-  info.innerHTML = `<p>正确：${correct}/${len}</p><p>本轮得分：${score}</p>`;
+  info.innerHTML = `
+    <p>正确：${correct}/${len}</p>
+    <p>本轮得分：${score}</p>
+    <p style="margin-top:10px;">✅ 正确数字：${correctHtml}</p>
+    <p>🖊️ 你的答案：${userHtml}</p>
+  `;
+
   const btns = document.createElement('div');
   btns.className = 'modal-buttons';
 
@@ -552,7 +581,6 @@ function showResultModal(ok, correct, score, len, wrong, a, b) {
   document.body.append(m);
   setTimeout(() => m.classList.add('active'), 10);
 }
-
 function initRankingBtn() {
   rankingBtn.onclick = showRankingModal;
 }
