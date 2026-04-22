@@ -1294,3 +1294,191 @@ h1::after, h1::before {
   white-space: nowrap;
   flex-shrink: 0;           /* 时间固定宽度，绝不被挤压变形 */
 }
+
+/* 操作加载动画 */
+#loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999999;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 14px;
+  backdrop-filter: blur(6px);
+}
+#loading-overlay .loading-spinner {
+  width: 42px;
+  height: 42px;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-left-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+#loading-overlay .loading-text {
+  color: white;
+  font-size: 15px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width:767px){
+  #loading-overlay .loading-spinner {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+
+/* 窗口内加载动画 */
+.inner-loading {
+  padding: 30px 0;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+.inner-loading .loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #f0f0f0;
+  border-top: 3px solid #007aff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 12px;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 个人中心弹窗 —— 与排行榜 100% 相同动画效果 */
+#profile-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+#profile-modal.active {
+  opacity: 1;
+  visibility: visible;
+}
+#profile-modal .auth-content {
+  transform: scale(0.95);
+  transition: transform 0.3s ease;
+}
+#profile-modal.active .auth-content {
+  transform: scale(1);
+}
+
+
+/* 结果弹窗 —— 与排行榜 100% 统一动画 */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+.modal.active {
+  opacity: 1;
+  visibility: visible;
+}
+.modal .modal-content {
+  transform: scale(0.95);
+  transition: transform 0.3s ease;
+}
+.modal.active .modal-content {
+  transform: scale(1);
+}
+
+/* 关闭动画统一 */
+.modal.closing {
+  opacity: 0;
+  visibility: hidden;
+}
+.modal.closing .modal-content {
+  transform: scale(0.95);
+}
+
+/* 321倒计时动画 */
+@keyframes countPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+.countdown-text {
+  font-size: 46px;
+  color: #ff3b30;
+  font-weight: bold;
+  animation: countPulse 0.9s infinite;
+  display: inline-block;
+}
+
+/* 数字闪烁消失动画 */
+@keyframes blinkFade {
+  0% { opacity: 1; }
+  50% { opacity: 0.2; }
+  100% { opacity: 1; }
+}
+.blink-number {
+  animation: blinkFade 0.4s infinite alternate;
+}
+
+
+/* 管理员头部完整适配：标题左、按钮组右、自动缩字体不换行 */
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: nowrap !important; /* 强制不换行 */
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.admin-header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* 按钮中间8px间距 */
+  flex-wrap: nowrap !important; /* 按钮永远同行，绝不换行 */
+}
+
+/* 删除按钮完全继承.btn样式，仅红色主题 */
+.admin-delete-btn {
+  background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%) !important;
+  white-space: nowrap !important; /* 按钮文字强制不换行 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* 屏幕缩小自动减小字体 */
+  font-size: clamp(12px, 1.05rem, 16px) !important;
+  padding: clamp(8px, 10px, 12px) clamp(16px, 28px, 32px) !important;
+}
+
+.admin-delete-btn:hover {
+  background: linear-gradient(135deg, #f87171 0%, var(--danger) 100%) !important;
+}
+
+/* 退出按钮同步强制不换行+自适应字体 */
+#exit-admin {
+  white-space: nowrap !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(12px, 1.05rem, 16px) !important;
+  padding: clamp(8px, 10px, 12px) clamp(16px, 28px, 32px) !important;
+}

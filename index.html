@@ -32,9 +32,13 @@
   <div class="loading-text">加载中，请稍候...</div>
 </div>
 
-    <!-- 新增：登录弹窗 -->
+<!-- 全局操作加载动画 -->
+<div id="loading-overlay" style="display:none;">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">操作处理中...</div>
+</div>
+
     <!-- 登录弹窗 -->
-<!-- 登录弹窗 -->
 <div id="login-modal" class="auth-modal">
   <div class="auth-content" style="position: relative;">
     <h2>🔐 登录</h2>
@@ -50,7 +54,6 @@
       <div class="auth-msg" id="login-msg"></div>
       <button class="auth-btn" id="do-login">登录</button>
       
-      <!-- 👇 新增：管理员入口按钮 -->
 <button 
   class="auth-btn admin-btn" 
   id="go-admin" 
@@ -76,13 +79,11 @@
   </div>
 </div>
 
-    <!-- 新增：注册弹窗 -->
     <!-- 注册弹窗 -->
 <div id="register-modal" class="auth-modal" style="display: none;">
   <div class="auth-content">
     <h2>📱 注册</h2>
     <div class="auth-form">
-      <!-- 给输入框添加 ID：register-name、register-account、register-password -->
       <div class="form-group">
         <label>用户名</label>
         <input type="text" id="register-name" placeholder="请输入用户名">
@@ -108,9 +109,8 @@
   </div>
 </div>
 
-    <!-- 游戏内容（默认隐藏，登录后显示） -->
+    <!-- 游戏内容 -->
     <div class="game-container" id="game-container" style="display: none;">
-        <!-- 顶部分数栏（总累计分+当前分数） -->
         <div class="top-score-bar">
             <div class="total-accumulated-score">
                 总累计分：<span id="total-accumulated-score">0</span>
@@ -123,7 +123,6 @@
         <h1>数字记忆挑战 🧠</h1>
         <p class="game-desc">选择难度后点击开始游戏，将显示对应位数的随机数字，记住并输入正确答案 ✨</p>
         
-        <!-- 难度选择区域 -->
         <div class="difficulty-selection">
             <label>选择难度 <span class="emoji">🎯</span>：</label>
             <div class="select-wrapper">
@@ -137,22 +136,18 @@
             <span class="difficulty-hint" id="difficulty-hint-text">相当于短验证码</span>
         </div>
         
-        <!-- 数字显示区域 -->
         <div class="number-display">?</div>
         <div class="countdown-hint" id="countdown-hint">准备开始记忆...</div>
         
-        <!-- 游戏控制区 -->
         <div class="controls">
             <button id="start-btn" class="btn">开始游戏 🚀</button>
             <input type="number" id="answer-input" placeholder="输入4位数字" disabled>
             <button id="submit-btn" class="btn" disabled>提交答案 ✅</button>
             <button id="ranking-btn" class="btn">排行榜 🏆</button>
             <button id="profile-btn" class="btn">个人中心 👤</button>
-            <!-- 新增：退出登录按钮 -->
             <button id="logout-btn" class="btn">退出登录 🚪</button>
         </div>
 
-        <!-- 底部统计栏（总游戏次数+正确率） -->
         <div class="bottom-stats-bar">
             <div class="total-games">
                 总游戏次数：<span id="total-games">0</span>
@@ -162,8 +157,8 @@
             </div>
         </div>
     </div>
-    <script src="js/game.js"></script>
-   <!-- ====================== 管理员面板 ====================== -->
+
+   <!-- 管理员面板 -->
 <div id="admin-panel" class="admin-panel" style="display:none;">
   <div class="admin-header">
     <h2>🔐 管理员后台 - 全部用户数据</h2>
@@ -176,7 +171,7 @@
           <th>排名</th>
           <th>用户名</th>
           <th>登录账号</th>
-         <th>绑定邮箱</th> 
+          <th>绑定邮箱</th> 
           <th>总分</th>
           <th>游戏次数</th>
           <th>正确率</th>
@@ -190,7 +185,8 @@
     </table>
   </div>
 </div>
-<!-- ====================== 个人中心面板 ====================== -->
+
+<!-- 个人中心面板 -->
 <div id="profile-modal" class="auth-modal" style="display:none;">
   <div class="auth-content" style="max-width:600px; text-align:left; max-height:90vh; overflow-y:auto;">
     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -216,5 +212,7 @@
     </div>
   </div>
 </div>
+
+<script src="js/game.js"></script>
 </body>
 </html>

@@ -42,7 +42,7 @@ window.addEventListener('load', async () => {
   document.getElementById('game-container').style.display = 'none';
 
   initGlobalElements();
-  await initAuth(); // 这里会做 validateUserExists
+  await initAuth();
 
   if (userState.isLogin) {
     // 已登录：显示游戏
@@ -57,7 +57,6 @@ window.addEventListener('load', async () => {
   }
 
   initDifficultyHint();
-
   document.getElementById('global-loading').style.display = 'none';
 });
 
@@ -84,31 +83,20 @@ function initGlobalElements() {
   registerPassword = document.getElementById('register-password');
   registerEmail = document.getElementById('register-email');
 
-// ========== 全新需求：问号框显示输入位数，不显示0，空则显示？ ==========
-// 输入框输入事件：实时更新顶部数字框
-answerInput.addEventListener('input', () => {
-  const len = answerInput.value.length;
-  // 有输入数字 → 显示位数；没输入 → 显示问号
-  numberDisplay.textContent = len > 0 ? len : '?';
-});
+  // 输入框输入事件：实时更新顶部数字框
+  answerInput.addEventListener('input', () => {
+    const len = answerInput.value.length;
+    numberDisplay.textContent = len > 0 ? len : '?';
+  });
 
-// 点击输入框聚焦（输入状态）→ 空的时候保持问号，不显示0
-answerInput.addEventListener('focus', () => {
-  const len = answerInput.value.length;
-  if(len === 0) numberDisplay.textContent = '?';
-});
-
-// 提交答案/清空后 → 恢复问号
-const oldCheckAnswer = checkAnswer;
-checkAnswer = function(){
-  oldCheckAnswer();
-  numberDisplay.textContent = '?';
+  // 点击输入框聚焦
+  answerInput.addEventListener('focus', () => {
+    const len = answerInput.value.length;
+    if(len === 0) numberDisplay.textContent = '?';
+  });
 }
 
-
-}
-
-// 验证当前用户是否真实存在于数据库（被删除则自动登出）
+// 验证当前用户是否真实存在于数据库
 async function validateUserExists() {
   try {
     const currentUser = AV.User.current();
@@ -123,18 +111,14 @@ async function validateUserExists() {
   }
 }
 
-// 强制登出并跳转登录页
+// 强制登出
 async function forceLogout() {
-  try {
-    await AV.User.logOut();
-  } catch (e) {}
-  
+  try { await AV.User.logOut(); } catch (e) {}
   userState = { isLogin: false, username: '', account: '', userId: '', email: '' };
   gameState.gameLogId = '';
-
   document.getElementById('game-container').style.display = 'none';
   document.getElementById('login-modal').style.display = 'flex';
-  showAlert('账号已被删除或不存在，已强制退出登录');
+  showAlert('账号已失效，已强制退出登录');
 }
 
 // 初始化登录状态
@@ -142,10 +126,7 @@ async function initAuth() {
   const currentUser = AV.User.current();
   
   if (currentUser) {
-    // 在这里验证，不会导致页面崩溃
-    if (!(await validateUserExists())) {
-      return;
-    }
+    if (!(await validateUserExists())) return;
 
     const emailVerified = currentUser.get('emailVerified');
     if (!emailVerified) {
@@ -163,22 +144,28 @@ async function initAuth() {
 
     await fetchUserGameLog();
     updateStatsDisplay();
-
-    document.getElementById('login-modal').style.display = 'none';
-    document.getElementById('game-container').style.display = 'block';
-  } else {
-    document.getElementById('login-modal').style.display = 'flex';
-    document.getElementById('game-container').style.display = 'none';
   }
 
+  // 登录注册切换事件
   document.getElementById('go-register').addEventListener('click', () => {
-    document.getElementById('login-modal').style.display = 'none';
-    document.getElementById('register-modal').style.display = 'flex';
+    const loading = document.getElementById('loading-overlay');
+    loading.style.display = 'flex';
+    setTimeout(() => {
+      document.getElementById('login-modal').style.display = 'none';
+      document.getElementById('register-modal').style.display = 'flex';
+      loading.style.display = 'none';
+    }, 300);
   });
+
   document.getElementById('go-login').addEventListener('click', () => {
-    document.getElementById('register-modal').style.display = 'none';
-    document.getElementById('login-modal').style.display = 'flex';
-    document.getElementById('register-msg').textContent = '';
+    const loading = document.getElementById('loading-overlay');
+    loading.style.display = 'flex';
+    setTimeout(() => {
+      document.getElementById('register-modal').style.display = 'none';
+      document.getElementById('login-modal').style.display = 'flex';
+      document.getElementById('register-msg').textContent = '';
+      loading.style.display = 'none';
+    }, 300);
   });
 
   document.getElementById('do-login').addEventListener('click', handleLogin);
@@ -190,10 +177,7 @@ async function initAuth() {
   if (loginAccount && loginPassword) {
     [loginAccount, loginPassword].forEach(input => {
       input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          handleLogin();
-        }
+        if (e.key === 'Enter') handleLogin();
       });
     });
     initAdminBtn();
@@ -202,29 +186,12 @@ async function initAuth() {
   if (registerName && registerAccount && registerPassword && registerEmail) {
     [registerName, registerAccount, registerPassword, registerEmail].forEach(input => {
       input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          handleRegister();
-        }
+        if (e.key === 'Enter') handleRegister();
       });
     });
   }
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      const activeModal = document.querySelector('.modal.active, .ranking-modal.active, .result-modal.active');
-      if (activeModal) {
-        if (activeModal.classList.contains('ranking-modal')) {
-          activeModal.classList.remove('active');
-          setTimeout(() => activeModal.remove(), 300);
-        } else {
-          activeModal.remove();
-        }
-      }
-    }
-  });
-
-  initProfileBtn();
+  initProfileBtn(); // ✅ 修复：在这里绑定个人中心点击事件！！！
 }
 
 // 注册
@@ -243,10 +210,11 @@ async function handleRegister() {
     msgEl.textContent = '密码长度不能少于6位！';
     return;
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    msgEl.textContent = '请输入有效的邮箱！';
-    return;
-  }
+
+  const loading = document.getElementById('loading-overlay');
+  const regBtn = document.getElementById('do-register');
+  loading.style.display = 'flex';
+  regBtn.disabled = true;
 
   try {
     const nicknameQuery = new AV.Query(AV.User);
@@ -278,25 +246,15 @@ async function handleRegister() {
     await user.signUp();
     await AV.User.logOut();
 
-    showAlert(`
-<div style="text-align:center; line-height:1.8;">
-  <strong>✅ 注册成功！</strong><br>
-  验证邮件已发送至你的邮箱：<br>
-  <strong style="color:#0066ff; font-size:16px; display:block; margin:6px 0;">${email}</strong>
-  请登录邮箱点击验证链接，完成激活后登录。<br>
-  <span style="font-size:12px; color:#0066ff;">（未验证会导致登录提示账号密码错误）</span>
-</div>
-`);
-
-    registerName.value = '';
-    registerAccount.value = '';
-    registerPassword.value = '';
-    registerEmail.value = '';
-    msgEl.textContent = '';
+    showAlert(`注册成功！验证邮件已发送至${email}，请验证后登录`);
+    registerName.value = registerAccount.value = registerPassword.value = registerEmail.value = '';
     document.getElementById('register-modal').style.display = 'none';
     document.getElementById('login-modal').style.display = 'flex';
   } catch (error) {
     msgEl.textContent = '注册失败：' + error.message;
+  } finally {
+    loading.style.display = 'none';
+    regBtn.disabled = false;
   }
 }
 
@@ -310,6 +268,11 @@ async function handleLogin() {
     msgEl.textContent = '账号、密码不能为空！';
     return;
   }
+
+  const loading = document.getElementById('loading-overlay');
+  const loginBtn = document.getElementById('do-login');
+  loading.style.display = 'flex';
+  loginBtn.disabled = true;
 
   try {
     const user = await AV.User.logIn(account, password);
@@ -326,21 +289,22 @@ async function handleLogin() {
     document.getElementById('game-container').style.display = 'block';
     init();
     initRankingBtn();
-
-    loginAccount.value = '';
-    loginPassword.value = '';
-    msgEl.textContent = '';
   } catch (error) {
-    if (error.code === 205) {
-      msgEl.textContent = '邮箱尚未验证！';
-    } else {
-      msgEl.textContent = '账号或密码错误！';
-    }
+    msgEl.textContent = error.code === 205 ? '邮箱尚未验证！' : '账号或密码错误！';
+  } finally {
+    loading.style.display = 'none';
+    loginBtn.disabled = false;
   }
 }
 
 // 退出登录
 async function handleLogout() {
+  const loading = document.getElementById('loading-overlay');
+  const logoutBtn = document.getElementById('logout-btn');
+  loading.style.display = 'flex';
+  logoutBtn.disabled = true;
+
+  await new Promise(resolve => setTimeout(resolve, 50));
   try {
     await AV.User.logOut();
     userState = { isLogin: false, username: '', account: '', userId: '', email: '' };
@@ -349,6 +313,8 @@ async function handleLogout() {
     document.getElementById('login-modal').style.display = 'flex';
   } catch (error) {
     showAlert('退出失败');
+  } finally {
+    setTimeout(() => { loading.style.display = 'none'; logoutBtn.disabled = false; }, 400);
   }
 }
 
@@ -357,39 +323,25 @@ async function initUserGameLog() {
   try {
     const GameLog = AV.Object.extend('GameLog');
     const gameLog = new GameLog();
-    
     gameLog.set('userId', userState.userId);
     gameLog.set('username', userState.username);
-    
     gameLog.set('totalAccumulatedScore', 0);
     gameLog.set('totalGames', 0);
     gameLog.set('correctGames', 0);
     gameLog.set('accuracy', 0);
-    
     const res = await gameLog.save();
     gameState.gameLogId = res.id;
-
-    gameState.totalAccumulatedScore = 0;
-    gameState.totalGames = 0;
-    gameState.correctGames = 0;
-    gameState.accuracy = 0;
-
-  } catch (e) {
-    showAlert('初始化数据失败');
-    console.error(e);
-  }
+    gameState.totalAccumulatedScore = gameState.totalGames = gameState.correctGames = gameState.accuracy = 0;
+  } catch (e) { showAlert('初始化数据失败'); }
 }
 
 // 读取游戏数据
 async function fetchUserGameLog() {
   if (!(await validateUserExists())) return;
-
   try {
     const query = new AV.Query('GameLog');
     query.equalTo('userId', userState.userId);
-    
     const log = await query.first();
-
     if (log) {
       gameState.gameLogId = log.id;
       gameState.totalAccumulatedScore = log.get('totalAccumulatedScore') || 0;
@@ -399,11 +351,7 @@ async function fetchUserGameLog() {
     } else {
       await initUserGameLog();
     }
-
-  } catch (e) {
-    showAlert('读取数据失败，请稍后重试');
-    console.error('读取数据异常', e);
-  }
+  } catch (e) { showAlert('读取数据失败'); }
 }
 
 // 更新游戏数据
@@ -458,33 +406,37 @@ function startGame() {
   gameState.targetNumber = Array.from({ length: len }, () => Math.floor(Math.random() * 10)).join('');
   setDisplayDuration(len);
 
-  numberDisplay.textContent = gameState.targetNumber;
-  numberDisplay.classList.remove('fade-out');
-
-  let countdown = gameState.displayDuration;
-  countdownHint.textContent = `记忆时间剩余：${countdown} 秒`;
-
   if (gameState.countdownTimer) clearInterval(gameState.countdownTimer);
-  gameState.countdownTimer = setInterval(() => {
-    countdown--;
-    if (countdown <= 0) {
-      clearInterval(gameState.countdownTimer);
-      gameState.countdownTimer = null;
 
-      setTimeout(() => {
-        numberDisplay.textContent = '?';
-        numberDisplay.classList.remove('fade-out');
-      }, 400);
+  numberDisplay.innerHTML = '<span class="countdown-text">3</span>';
+  countdownHint.textContent = "准备开始记忆！";
+  setTimeout(() => numberDisplay.innerHTML = '<span class="countdown-text">2</span>', 1000);
+  setTimeout(() => numberDisplay.innerHTML = '<span class="countdown-text">1</span>', 2000);
+  setTimeout(() => {
+    numberDisplay.innerHTML = '<span class="countdown-text">GO!</span>';
+    countdownHint.textContent = "开始记忆！";
+  }, 3000);
 
-      countdownHint.textContent = '请输入数字';
-      answerInput.disabled = false;
-      submitBtn.disabled = false;
-      answerInput.focus();
-    } else {
+  setTimeout(() => {
+    numberDisplay.textContent = gameState.targetNumber;
+    let countdown = gameState.displayDuration;
+    countdownHint.textContent = `记忆时间剩余：${countdown} 秒`;
+    gameState.countdownTimer = setInterval(() => {
+      countdown--;
+      if (countdown <= 0) {
+        clearInterval(gameState.countdownTimer);
+        gameState.countdownTimer = null;
+        setTimeout(() => numberDisplay.textContent = '?', 300);
+        countdownHint.textContent = '请输入数字';
+        answerInput.disabled = false;
+        submitBtn.disabled = false;
+        answerInput.focus();
+        return;
+      }
+      if (countdown === 1) numberDisplay.innerHTML = `<span class="blink-number">${gameState.targetNumber}</span>`;
       countdownHint.textContent = `记忆时间剩余：${countdown} 秒`;
-      if (countdown === 1) numberDisplay.classList.add('fade-out');
-    }
-  }, 1000);
+    }, 1000);
+  }, 3600);
 }
 
 function setDisplayDuration(len) {
@@ -518,19 +470,29 @@ function checkAnswer() {
   saveGameRecord(roundScore, len);
   updateStatsDisplay();
   currentScoreEl.textContent = roundScore;
-  showResultModal(full, correct, roundScore, len, len - correct, 0, 0);
+
+  // ✅ 第一步：立刻保存你的答案（永久有效，不会丢失）
+  const userAnswer = ans;
 
   gameState.isPlaying = false;
   answerInput.disabled = true;
   submitBtn.disabled = true;
   startBtn.disabled = false;
   difficultySelect.disabled = false;
-
   if (gameState.countdownTimer) {
     clearInterval(gameState.countdownTimer);
     gameState.countdownTimer = null;
   }
+
+  // ✅ 第二步：立刻弹出弹窗（答案已经保存，100%显示）
+  showResultModal(full, correct, roundScore, len, userAnswer);
+
+  // ✅ 第三步：弹窗弹出后，延迟0.5秒数字框变问号
+  setTimeout(() => {
+    numberDisplay.textContent = '?';
+  }, 500);
 }
+
 
 function updateStatsDisplay() {
   totalAccumulatedScoreEl.textContent = gameState.totalAccumulatedScore;
@@ -539,268 +501,547 @@ function updateStatsDisplay() {
   accuracyEl.textContent = gameState.accuracy + '%';
 }
 
-
-
-function showResultModal(ok, correct, score, len, wrong, a, b) {
+function showResultModal(ok, correct, score, len, userAnswer) {
+  // 先清空旧弹窗
   document.querySelectorAll('.modal,.result-modal').forEach(x => x.remove());
-  const m = document.createElement('div');
+
+  // 创建弹窗（完全沿用你原来的结构，不会出错）
+  const m = document.createElement('div'); 
   m.className = 'modal';
-  const c = document.createElement('div');
+  const c = document.createElement('div'); 
   c.className = 'modal-content';
-  const t = document.createElement('h2');
+  const t = document.createElement('h2'); 
   t.textContent = ok ? '🎉 挑战成功' : '⚠️ 挑战失败';
   t.style.color = ok ? '#10b981' : '#ef4444';
 
-  // ========== 核心：生成带颜色的数字对比（字号变小） ==========
-  const userAnswer = answerInput.value.trim();
   const correctAnswer = gameState.targetNumber;
-
-  // 正确数字（全部绿色 + 小字号）
-  let correctHtml = '';
-  for (let ch of correctAnswer) {
-    correctHtml += `<span style="color:#10b981; font-weight:bold; margin:0 1px; font-size:14px;">${ch}</span>`;
+  let correctHtml = '', userHtml = '';
+  // 渲染答案（直接用传进来的userAnswer，不读取输入框）
+  for (let i = 0; i < correctAnswer.length; i++) {
+    correctHtml += `<span style="color:#10b981; font-weight:bold; margin:0 1px;">${correctAnswer[i]}</span>`;
+    userHtml += `<span style="color:${userAnswer[i] === correctAnswer[i] ? '#10b981' : '#ef4444'}; font-weight:bold; margin:0 1px;">${userAnswer[i]}</span>`;
   }
 
-  // 用户答案（正确绿、错误红 + 小字号）
-  let userHtml = '';
-  for (let i = 0; i < userAnswer.length; i++) {
-    const u = userAnswer[i] || '';
-    const cor = correctAnswer[i] || '';
-    if (u === cor) {
-      userHtml += `<span style="color:#10b981; font-weight:bold; margin:0 1px; font-size:14px;">${u}</span>`;
-    } else {
-      userHtml += `<span style="color:#ef4444; font-weight:bold; margin:0 1px; font-size:14px;">${u}</span>`;
-    }
-  }
-
-  const info = document.createElement('div');
+  const info = document.createElement('div'); 
   info.className = 'detail-info';
-  // 🔥 优化：正确数字、用户答案 各占一行，长数字自动换行
   info.innerHTML = `
     <p>正确：${correct}/${len}</p>
     <p>本轮得分：${score}</p>
-    <p style="margin-top:10px;">✅ 正确数字：</p>
-    <p style="word-break:break-all;line-height:1.6;">${correctHtml}</p>
-    <p style="margin-top:8px;">🖊️ 你的答案：</p>
-    <p style="word-break:break-all;line-height:1.6;">${userHtml}</p>
+    <p>正确数字：</p>
+    <p>${correctHtml}</p>
+    <p>你的答案：</p>
+    <p>${userHtml}</p>
   `;
 
-  const btns = document.createElement('div');
+  const btns = document.createElement('div'); 
   btns.className = 'modal-buttons';
 
-  const cont = document.createElement('button');
+  const cont = document.createElement('button'); 
   cont.className = 'btn modal-btn continue';
-  cont.textContent = '继续';
-  cont.onclick = () => { m.remove(); startGame(); };
-
-  const end = document.createElement('button');
-  end.className = 'btn modal-btn end';
-  end.textContent = '结束';
-  end.onclick = () => {
-    m.remove();
-    gameState.isPlaying = false;
-    numberDisplay.textContent = '?';
+  cont.textContent = '继续'; 
+  cont.onclick = () => { 
     answerInput.value = '';
+    m.classList.add('closing'); 
+    setTimeout(() => { 
+      m.remove(); 
+      numberDisplay.textContent = '?'; 
+      startGame();
+    }, 300); 
   };
 
-  btns.append(cont, end);
-  c.append(t, info, btns);
-  m.append(c);
+  const end = document.createElement('button'); 
+  end.className = 'btn modal-btn end';
+  end.textContent = '结束'; 
+  end.onclick = () => { 
+  answerInput.value = '';
+    m.classList.add('closing'); 
+    setTimeout(() => { 
+      m.remove(); 
+      numberDisplay.textContent = '?'; 
+      answerInput.value = ''; // 弹窗关闭才清空输入框
+    }, 300); 
+  };
+
+  btns.append(cont, end); 
+  c.append(t, info, btns); 
+  m.append(c); 
   document.body.append(m);
+
+  // 立刻执行弹出动画，不会延迟消失
   setTimeout(() => m.classList.add('active'), 10);
 }
 
-function initRankingBtn() {
-  rankingBtn.onclick = showRankingModal;
-}
 
+function initRankingBtn() { rankingBtn.onclick = showRankingModal; }
 async function showRankingModal() {
-  const m = document.createElement('div');
-  m.className = 'ranking-modal';
-  const c = document.createElement('div');
-  c.className = 'ranking-content';
-  const t = document.createElement('h2');
-  t.textContent = '🏆 排行榜';
-  const list = document.createElement('ul');
-  list.className = 'ranking-list';
-  list.innerHTML = '<li>加载中...</li>';
-  const close = document.createElement('button');
-  close.className = 'ranking-close-btn';
-  close.textContent = '关闭';
-  close.onclick = () => { m.classList.remove('active'); setTimeout(() => m.remove(), 300); };
-  c.append(t, list, close);
-  m.append(c);
-  document.body.append(m);
+  const m = document.createElement('div'); m.className = 'ranking-modal';
+  const c = document.createElement('div'); c.className = 'ranking-content';
+  const t = document.createElement('h2'); t.textContent = '🏆 排行榜';
+  const list = document.createElement('ul'); list.className = 'ranking-list';
+  list.innerHTML = `<div class="inner-loading"><div class="loading-spinner"></div>加载中...</div>`;
+  const close = document.createElement('button'); close.className = 'ranking-close-btn';
+  close.textContent = '关闭'; close.onclick = () => { m.classList.remove('active'); setTimeout(() => m.remove(), 300); };
+  c.append(t, list, close); m.append(c); document.body.append(m);
   setTimeout(() => m.classList.add('active'), 10);
-
-  const data = await getRankingData();
-  list.innerHTML = '';
+  const [data] = await Promise.all([getRankingData(), new Promise(r => setTimeout(r, 300))]);
+  list.innerHTML = data.length === 0 ? '<li>暂无排行数据</li>' : '';
   data.forEach((item, index) => {
-    const li = document.createElement('li');
-    li.className = 'ranking-item';
-    const isCurrentUser = item.username === userState.username;
-    li.innerHTML = `
-      <span class="ranking-rank">${index + 1}</span>
-      <span class="ranking-username">
-        ${item.username}
-        ${isCurrentUser ? '<span class="current-user-tag">我</span>' : ''}
-      </span>
-      <span class="ranking-score">${item.score} 分</span>
-    `;
-    if (isCurrentUser) li.classList.add('current-user-item');
-    list.append(li);
+    const li = document.createElement('li'); li.className = 'ranking-item';
+    const isMe = item.username === userState.username;
+    li.innerHTML = `<span class="ranking-rank">${index+1}</span><span class="ranking-username">${item.username}${isMe?'<span class="current-user-tag">我</span>':''}</span><span class="ranking-score">${item.score}分</span>`;
+    if (isMe) li.classList.add('current-user-item'); list.append(li);
   });
 }
 
 async function getRankingData() {
   if (!(await validateUserExists())) return [];
-  try {
-    const q = new AV.Query('GameLog');
-    q.descending('totalAccumulatedScore');
-    q.limit(10);
-    const list = await q.find();
-    return list.map(x => ({ username: x.get('username'), score: x.get('totalAccumulatedScore') || 0 }));
-  } catch { return []; }
+  try { const q = new AV.Query('GameLog'); q.descending('totalAccumulatedScore'); q.limit(10);
+  const list = await q.find(); return list.map(x => ({ username: x.get('username'), score: x.get('totalAccumulatedScore')||0 })); } catch { return []; }
 }
 
 function showAlert(msg) {
-  const a = document.createElement('div');
-  a.className = 'result-modal';
-  const c = document.createElement('div');
-  c.className = 'result-content';
+  const a = document.createElement('div'); a.className = 'result-modal';
+  const c = document.createElement('div'); c.className = 'result-content';
   c.innerHTML = `<h3>⚠️ 提示</h3><p>${msg}</p>`;
-  const btn = document.createElement('button');
-  btn.className = 'result-btn';
-  btn.textContent = '确定';
-  btn.onclick = () => a.remove();
-  c.append(btn);
-  a.append(c);
-  document.body.append(a);
+  const btn = document.createElement('button'); btn.className = 'result-btn'; btn.textContent = '确定';
+  btn.onclick = () => a.remove(); c.append(btn); a.append(c); document.body.append(a);
   setTimeout(() => a.classList.add('active'), 10);
 }
 
-// ====================== 管理员功能 ======================
+// ====================== 管理员功能（已彻底删除删除用户！！！）======================
 let isAdminMode = false;
-
 function initAdminBtn() {
   const go = document.getElementById('go-admin');
   const exit = document.getElementById('exit-admin');
-  go?.addEventListener('click', () => {
+  go?.addEventListener('click', async () => {
     const user = loginAccount.value.trim();
     const pwd = loginPassword.value.trim();
-    if (user === 'lichengxue' && pwd === 'xswllcx') {
-      isAdminMode = true;
-      document.getElementById('login-modal').style.display = 'none';
-      document.getElementById('admin-panel').style.display = 'block';
-      loadAllUserData();
-    } else {
-      document.getElementById('login-msg').textContent = '管理员账号或密码错误';
-    }
+    const loading = document.getElementById('loading-overlay');
+    loading.style.display = 'flex'; go.disabled = true;
+    try {
+      if (user === 'lichengxue' && pwd === 'xswllcx') {
+        isAdminMode = true;
+        document.getElementById('login-modal').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'block';
+        await loadAllUserData();
+      } else document.getElementById('login-msg').textContent = '管理员账号或密码错误';
+    } finally { loading.style.display = 'none'; go.disabled = false; }
   });
   exit?.addEventListener('click', () => {
-    isAdminMode = false;
-    document.getElementById('admin-panel').style.display = 'none';
-    document.getElementById('login-modal').style.display = 'flex';
+    const loading = document.getElementById('loading-overlay');
+    loading.style.display = 'flex';
+    setTimeout(() => {
+      isAdminMode = false;
+      document.getElementById('admin-panel').style.display = 'none';
+      document.getElementById('login-modal').style.display = 'flex';
+      loading.style.display = 'none';
+    }, 300);
   });
+
+
+
+     // 删除用户按钮（CSS统一样式+自适应字体+绝不换行+靠右布局）
+  const deleteBtn = document.createElement('button');
+  deleteBtn.innerText = '删除用户';
+  deleteBtn.className = 'btn admin-delete-btn';
+
+  // 头部容器强制不换行
+  const adminHeader = exit.parentElement;
+  adminHeader.classList.add('admin-header');
+
+  // 按钮组容器强制同行不换行
+  const btnGroup = document.createElement('div');
+  btnGroup.classList.add('admin-header-buttons');
+
+  // 插入按钮顺序
+  btnGroup.appendChild(deleteBtn);
+  btnGroup.appendChild(exit);
+  adminHeader.appendChild(btnGroup);
+
+  // 原有点击弹窗逻辑完全不变
+  deleteBtn.onclick = () => {
+    const modal = document.createElement('div');
+    modal.className = 'ranking-modal';
+    modal.style.zIndex = 99999;
+    
+    const content = document.createElement('div');
+    content.className = 'ranking-content';
+    content.style.padding = '24px';
+    content.style.maxWidth = '400px';
+    
+    const h3 = document.createElement('h3');
+    h3.innerText = '⚠️ 删除用户';
+    h3.style.color = '#ef4444';
+    
+    const p1 = document.createElement('p');
+    p1.innerText = '删除用户需登录 LeanCloud 控制台操作';
+    
+    const p2 = document.createElement('p');
+    p2.style.fontSize = '12px';
+    p2.style.color = '#666';
+    p2.innerText = '点击确定后跳转到 LeanCloud 登录页';
+    
+    const btnWrap = document.createElement('div');
+    btnWrap.style.display = 'flex';
+    btnWrap.style.gap = '10px';
+    btnWrap.style.marginTop = '20px';
+    
+    const cancel = document.createElement('button');
+    cancel.className = 'ranking-close-btn';
+    cancel.innerText = '取消';
+    cancel.style.flex = 1;
+    
+    const go = document.createElement('button');
+    go.className = 'ranking-close-btn';
+    go.innerText = '前往登录';
+    go.style.flex = 1;
+    go.style.backgroundColor = '#6366f1';
+    go.style.color = '#fff';
+    
+    btnWrap.append(cancel, go);
+    content.append(h3, p1, p2, btnWrap);
+    modal.append(content);
+    document.body.append(modal);
+    
+    setTimeout(() => modal.classList.add('active'), 10);
+    
+    cancel.onclick = () => {
+      modal.classList.remove('active');
+      setTimeout(() => modal.remove(), 300);
+    };
+    
+    go.onclick = () => {
+      window.open('https://console.leancloud.cn/login', '_blank');
+      cancel.onclick();
+    };
+  };
 }
+
+
 
 async function loadAllUserData() {
   const listEl = document.getElementById('admin-user-list');
   listEl.innerHTML = '<tr><td colspan="9">加载中...</td></tr>';
-
   try {
     const users = await new AV.Query(AV.User).limit(1000).find();
     const logs = await new AV.Query('GameLog').limit(1000).find();
-    const logMap = new Map();
-    logs.forEach(log => logMap.set(log.get('userId'), log));
-
+    const logMap = new Map(); logs.forEach(log => logMap.set(log.get('userId'), log));
     const result = users.map(user => {
       const log = logMap.get(user.id);
       return {
-        userId: user.id,
-        nickname: user.get('nickname') || '未设置',
-        account: user.get('username'),
-        email: user.get('email') || '',
-        score: log ? log.get('totalAccumulatedScore') || 0 : 0,
-        games: log ? log.get('totalGames') || 0 : 0,
-        accuracy: log ? log.get('accuracy') || 0 : 0
+        userId: user.id, nickname: user.get('nickname')||'未设置', account: user.get('username'),
+        email: user.get('email')||'', score: log?.get('totalAccumulatedScore')||0,
+        games: log?.get('totalGames')||0, accuracy: log?.get('accuracy')||0
       };
-    });
+    }).sort((a,b)=>b.score-a.score);
 
-    result.sort((a, b) => b.score - a.score);
     listEl.innerHTML = '';
     result.forEach((item, idx) => {
       const tr = document.createElement('tr');
+      // 无删除用户按钮！！！只保留重置密码
       tr.innerHTML = `
-        <td>${idx + 1}</td>
-        <td>${item.nickname}</td>
-        <td>${item.account}</td>
-        <td>${item.email || '未绑定'}</td>
-        <td>${item.score}</td>
-        <td>${item.games}</td>
-        <td>${item.accuracy}%</td>
-        <td style="font-size:11px;">${item.userId}</td>
+        <td>${idx+1}</td><td>${item.nickname}</td><td>${item.account}</td>
+        <td>${item.email||'未绑定'}</td><td>${item.score}</td><td>${item.games}</td>
+        <td>${item.accuracy}%</td><td style="font-size:11px;">${item.userId}</td>
         <td>
-          <button onclick="showResetPwdModal('${item.userId}','${item.nickname}','${item.account}','${item.email}')"
-          style="padding:4px 8px;font-size:12px;background:#007aff;color:white;border:none;border-radius:4px;">
-          发送重置链接</button>
+          <button onclick="showResetPwdModal('${item.userId}','${item.nickname}','${item.account}','${item.email}')" style="padding:4px 8px;font-size:12px;background:#007aff;color:white;border:none;border-radius:4px;">发送重置</button>
         </td>`;
       listEl.appendChild(tr);
     });
-  } catch (err) {
-    listEl.innerHTML = `<tr><td colspan="9">加载失败</td></tr>`;
-  }
+  } catch (err) { listEl.innerHTML = `<tr><td colspan="9">加载失败</td></tr>`; }
 }
+
+
 
 function showResetPwdModal(userId, username, account, email) {
-  document.querySelector('.reset-pwd-modal')?.remove();
+  // 排行榜同款弹窗结构
   const modal = document.createElement('div');
-  modal.className = 'reset-pwd-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
+  modal.className = 'ranking-modal';
+  modal.style.zIndex = 9999;
+
   const content = document.createElement('div');
-  content.style.cssText = 'background:white;padding:24px;border-radius:12px;width:320px';
+  content.className = 'ranking-content';
+  content.style.padding = '24px';
+  content.style.width = '90%';
+  content.style.maxWidth = '460px';
 
-  const hasEmail = !!email;
-  content.innerHTML = `
-    <h3>发送重置链接</h3>
-    <div>用户名：${username}</div>
+  // 标题
+  const title = document.createElement('h3');
+  title.textContent = '📩 发送密码重置链接';
+  title.style.marginBottom = '16px';
+
+  // 用户信息
+  const info = document.createElement('div');
+  info.style.fontSize = '14px';
+  info.style.lineHeight = '1.8';
+  info.innerHTML = `
+    <div>用户：${username}</div>
     <div>账号：${account}</div>
-    <div>邮箱：${email || '未绑定'}</div>
-    ${hasEmail ? '<input id="reset-email" type="email" value="' + email + '" readonly style="width:100%;padding:10px;margin:10px 0">' : ''}
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <button id="cancel" style="flex:1;padding:10px">取消</button>
-      <button id="send" style="flex:1;padding:10px;background:#007aff;color:white" ${hasEmail ? '' : 'disabled'}>发送</button>
-    </div>`;
+  `;
 
-  modal.appendChild(content);
-  document.body.appendChild(modal);
-  document.getElementById('cancel').onclick = () => modal.remove();
-  if (hasEmail) {
-    document.getElementById('send').onclick = async () => {
-      await AV.User.requestPasswordReset(email);
-      alert('✅ 已发送');
-      modal.remove();
+  // 邮箱：保留锁定只读，移除铅笔图标
+  const emailWrap = document.createElement('div');
+  emailWrap.style.display = 'flex';
+  emailWrap.style.alignItems = 'center';
+  emailWrap.style.gap = '8px';
+  emailWrap.style.marginTop = '12px';
+
+  const emailInput = document.createElement('input');
+  emailInput.type = 'email';
+  emailInput.value = email || '';
+  emailInput.style.flex = 1;
+  emailInput.style.padding = '10px 12px';
+  emailInput.style.borderRadius = '6px';
+  emailInput.style.border = '1px solid #ddd';
+  emailInput.style.fontSize = '14px';
+  emailInput.readOnly = true;
+  emailInput.style.backgroundColor = '#f5f5f5';
+
+  emailWrap.append(emailInput);
+
+  // 提示文字
+  const tip = document.createElement('div');
+  tip.style.fontSize = '12px';
+  tip.style.color = '#666';
+  tip.style.marginTop = '8px';
+  tip.textContent = '将发送重置链接到用户当前绑定邮箱，不可修改';
+
+  // 按钮组（样式完全统一）
+  const btnWrap = document.createElement('div');
+  btnWrap.style.display = 'flex';
+  btnWrap.style.gap = '12px';
+  btnWrap.style.marginTop = '20px';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'ranking-close-btn';
+  cancelBtn.textContent = '取消';
+  cancelBtn.style.flex = 1;
+  cancelBtn.style.borderRadius = '12px';
+  cancelBtn.style.height = '48px';
+  cancelBtn.style.fontSize = '16px';
+  cancelBtn.style.background = '#eef2fb';
+  cancelBtn.style.color = '#6366f1';
+  cancelBtn.style.border = 'none';
+
+  const sendBtn = document.createElement('button');
+  sendBtn.className = 'ranking-close-btn';
+  sendBtn.textContent = '确认发送';
+  sendBtn.style.flex = 1;
+  sendBtn.style.borderRadius = '12px';
+  sendBtn.style.height = '48px';
+  sendBtn.style.fontSize = '16px';
+  sendBtn.style.background = '#6366f1';
+  sendBtn.style.color = '#ffffff';
+  sendBtn.style.border = 'none';
+
+  btnWrap.append(cancelBtn, sendBtn);
+  content.append(title, info, emailWrap, tip, btnWrap);
+  modal.append(content);
+  document.body.append(modal);
+
+  // 排行榜同款弹出动画
+  setTimeout(() => modal.classList.add('active'), 10);
+
+  // 关闭当前弹窗
+  function closeModal() {
+    modal.classList.remove('active');
+    setTimeout(() => modal.remove(), 300);
+  }
+
+  cancelBtn.onclick = closeModal;
+
+  // ====================== 自定义确认弹窗（排行榜同款，不再用浏览器alert） ======================
+  function showConfirmSend() {
+    const confirmModal = document.createElement('div');
+    confirmModal.className = 'ranking-modal';
+    confirmModal.style.zIndex = 10000;
+
+    const confirmContent = document.createElement('div');
+    confirmContent.className = 'ranking-content';
+    confirmContent.style.padding = '24px';
+    confirmContent.style.maxWidth = '420px';
+
+    const confirmTitle = document.createElement('h3');
+    confirmTitle.textContent = '⚠️ 确认发送';
+    confirmTitle.style.marginBottom = '16px';
+
+    const confirmText = document.createElement('p');
+    confirmText.style.fontSize = '14px';
+    confirmText.style.lineHeight = '1.8';
+    confirmText.textContent = `确认发送重置密码链接到邮箱：${email}？`;
+
+    const confirmBtnWrap = document.createElement('div');
+    confirmBtnWrap.style.display = 'flex';
+    confirmBtnWrap.style.gap = '12px';
+    confirmBtnWrap.style.marginTop = '20px';
+
+    const confirmCancel = document.createElement('button');
+    confirmCancel.className = 'ranking-close-btn';
+    confirmCancel.textContent = '取消';
+    confirmCancel.style.flex = 1;
+    confirmCancel.style.borderRadius = '12px';
+    confirmCancel.style.height = '48px';
+    confirmCancel.style.background = '#eef2fb';
+    confirmCancel.style.color = '#6366f1';
+    confirmCancel.style.border = 'none';
+
+    const confirmOk = document.createElement('button');
+    confirmOk.className = 'ranking-close-btn';
+    confirmOk.textContent = '确认发送';
+    confirmOk.style.flex = 1;
+    confirmOk.style.borderRadius = '12px';
+    confirmOk.style.height = '48px';
+    confirmOk.style.background = '#6366f1';
+    confirmOk.style.color = '#fff';
+    confirmOk.style.border = 'none';
+
+    confirmBtnWrap.append(confirmCancel, confirmOk);
+    confirmContent.append(confirmTitle, confirmText, confirmBtnWrap);
+    confirmModal.append(confirmContent);
+    document.body.append(confirmModal);
+
+    setTimeout(() => confirmModal.classList.add('active'), 10);
+
+    // 关闭确认窗
+    function closeConfirm() {
+      confirmModal.classList.remove('active');
+      setTimeout(() => confirmModal.remove(), 300);
+    }
+
+    confirmCancel.onclick = closeConfirm;
+
+    // 确认执行发送
+    confirmOk.onclick = async () => {
+      closeConfirm();
+      try {
+        await AV.User.requestPasswordReset(email);
+        // ====================== 发送成功弹窗（同样排行榜同款动画） ======================
+        const successModal = document.createElement('div');
+        successModal.className = 'ranking-modal';
+        successModal.style.zIndex = 10000;
+
+        const successContent = document.createElement('div');
+        successContent.className = 'ranking-content';
+        successContent.style.padding = '24px';
+        successContent.style.maxWidth = '380px';
+
+        const successTitle = document.createElement('h3');
+        successTitle.textContent = '✅ 发送成功';
+        successTitle.style.color = '#10b981';
+
+        const successText = document.createElement('p');
+        successText.style.marginTop = '12px';
+        successText.textContent = '密码重置链接已发送至用户邮箱';
+
+        const successBtnWrap = document.createElement('div');
+        successBtnWrap.style.marginTop = '20px';
+
+        const successOk = document.createElement('button');
+        successOk.className = 'ranking-close-btn';
+        successOk.textContent = '确定';
+        successOk.style.width = '100%';
+        successOk.style.borderRadius = '12px';
+        successOk.style.height = '48px';
+        successOk.style.background = '#6366f1';
+        successOk.style.color = '#fff';
+        successOk.style.border = 'none';
+
+        successBtnWrap.append(successOk);
+        successContent.append(successTitle, successText, successBtnWrap);
+        successModal.append(successContent);
+        document.body.append(successModal);
+        setTimeout(() => successModal.classList.add('active'), 10);
+
+        successOk.onclick = () => {
+          successModal.classList.remove('active');
+          setTimeout(() => successModal.remove(), 300);
+          closeModal(); // 关闭主面板
+        };
+
+      } catch (err) {
+        // 失败也是同款弹窗
+        const errModal = document.createElement('div');
+        errModal.className = 'ranking-modal';
+        errModal.style.zIndex = 10000;
+        const errContent = document.createElement('div');
+        errContent.className = 'ranking-content';
+        errContent.style.padding = '24px';
+        errContent.style.maxWidth = '380px';
+        const errTitle = document.createElement('h3');
+        errTitle.textContent = '❌ 发送失败';
+        errTitle.style.color = '#ef4444';
+        const errText = document.createElement('p');
+        errText.style.marginTop = '12px';
+        errText.textContent = err.message;
+        const errBtnWrap = document.createElement('div');
+        errBtnWrap.style.marginTop = '20px';
+        const errOk = document.createElement('button');
+        errOk.className = 'ranking-close-btn';
+        errOk.textContent = '确定';
+        errOk.style.width = '100%';
+        errOk.style.borderRadius = '12px';
+        errOk.style.height = '48px';
+        errOk.style.background = '#6366f1';
+        errOk.style.color = '#fff';
+        errOk.style.border = 'none';
+        errBtnWrap.append(errOk);
+        errContent.append(errTitle, errText, errBtnWrap);
+        errModal.append(errContent);
+        document.body.append(errModal);
+        setTimeout(() => errModal.classList.add('active'), 10);
+        errOk.onclick = () => {
+          errModal.classList.remove('active');
+          setTimeout(() => errModal.remove(), 300);
+        };
+      }
     };
   }
+
+  // 点击发送打开确认弹窗
+  sendBtn.onclick = showConfirmSend;
 }
 
-// ====================== 个人中心 ======================
+
+
+
+// ====================== 个人中心（已彻底修复点击报错！！！）======================
 function initProfileBtn() {
   document.getElementById('profile-btn').onclick = async () => {
     const modal = document.getElementById('profile-modal');
+    const recordsEl = document.getElementById('profile-records');
+
+    // 赋值基础信息
     document.getElementById('profile-account').innerText = userState.account;
     document.getElementById('profile-nickname').innerText = userState.username;
     document.getElementById('profile-total-score').innerText = gameState.totalAccumulatedScore;
     document.getElementById('profile-total-games').innerText = gameState.totalGames;
     document.getElementById('profile-accuracy').innerText = gameState.accuracy + '%';
-    loadGameRecords();
-    modal.style.display = 'flex';
 
+    // 🔥 先显示【加载中动画】（和排行榜完全一样）
+    recordsEl.innerHTML = `
+      <div class="inner-loading">
+        <div class="loading-spinner"></div>
+        加载游戏记录中...
+      </div>
+    `;
+
+    // 🔥 先显示弹窗
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('active'), 10);
+
+    // 🔥 异步加载记录（加载完自动替换）
+    await loadGameRecords();
+
+    // 关闭逻辑
     document.getElementById('close-profile').onclick = () => {
-      modal.style.display = 'none';
+      modal.classList.remove('active');
+      setTimeout(() => {
+        modal.style.display = 'none';
+      }, 300);
     };
   };
 
+  // 修改昵称按钮
   document.addEventListener('click', (e) => {
     if (e.target && e.target.id === 'edit-nickname-btn') {
       editNickname();
@@ -808,19 +1049,27 @@ function initProfileBtn() {
   });
 }
 
+// 加载游戏记录（修复异步报错）
 async function loadGameRecords() {
   const container = document.getElementById('profile-records');
-  container.innerHTML = '加载中...';
+  container.innerHTML = `<div class="inner-loading"><div class="loading-spinner"></div>加载游戏记录中...</div>`;
+
   try {
     const query = new AV.Query('GameRecord');
     query.equalTo('userId', userState.userId);
     query.descending('createdAt');
     query.limit(30);
-    const list = await query.find();
+
+    const [list] = await Promise.all([
+      query.find(),
+      new Promise(resolve => setTimeout(resolve, 300))
+    ]);
+
     if (list.length === 0) {
       container.innerHTML = '<p>暂无游戏记录</p>';
       return;
     }
+
     let html = '';
     list.forEach(item => {
       const score = item.get('score');
@@ -831,68 +1080,159 @@ async function loadGameRecords() {
     container.innerHTML = html;
   } catch (e) {
     container.innerHTML = '<p>加载失败</p>';
+    console.error('个人中心记录加载错误', e);
   }
 }
 
-// 修改昵称
+// 修改昵称（修复重复弹窗 + 自定义动画弹窗）
 async function editNickname() {
   if (gameState.totalAccumulatedScore < 100) {
     showAlert('❌ 需要 100 分才能修改昵称');
     return;
   }
 
-  const newName = prompt('请输入新昵称（消耗100分）：', userState.username);
-  if (!newName || newName.trim() === '') return;
-  if (!confirm('确认修改？扣除100分！')) return;
+  // ------------------------------
+  // 自定义弹窗（和排行榜一样动画）
+  // ------------------------------
+  const modal = document.createElement('div');
+  modal.className = 'ranking-modal';
+  modal.style.zIndex = 9999;
 
-  try {
-    const user = AV.User.current();
-    const userId = user.id;
+  const content = document.createElement('div');
+  content.className = 'ranking-content';
+  content.style.padding = '24px';
+  content.style.width = '90%';
+  content.style.maxWidth = '420px';
 
-    user.set('nickname', newName);
-    await user.save();
+  // 标题
+  const h3 = document.createElement('h3');
+  h3.textContent = '✏️ 修改昵称';
+  h3.style.marginBottom = '16px';
 
-    const logQuery = new AV.Query('GameLog');
-    logQuery.equalTo('userId', userId);
-    const log = await logQuery.first();
-    if (log) {
-      log.set('username', newName);
-      await log.save();
-    }
+  // 输入框
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = userState.username;
+  input.style.width = '100%';
+  input.style.padding = '12px';
+  input.style.borderRadius = '6px';
+  input.style.border = '1px solid #ddd';
+  input.style.fontSize = '15px';
+  input.placeholder = '请输入新昵称';
 
-    const recordQuery = new AV.Query('GameRecord');
-    recordQuery.equalTo('userId', userId);
-    recordQuery.limit(1000);
-    const records = await recordQuery.find();
-    for (let record of records) {
-      record.set('username', newName);
-    }
-    await AV.Object.saveAll(records);
+  // 提示
+  const tip = document.createElement('div');
+  tip.style.fontSize = '12px';
+  tip.style.color = '#666';
+  tip.style.marginTop = '8px';
+  tip.textContent = '修改将消耗 100 积分';
 
-    gameState.totalAccumulatedScore -= 100;
-    const logUpdate = AV.Object.createWithoutData('GameLog', gameState.gameLogId);
-    logUpdate.set('totalAccumulatedScore', gameState.totalAccumulatedScore);
-    await logUpdate.save();
+  // 按钮
+  const btnWrap = document.createElement('div');
+  btnWrap.style.display = 'flex';
+  btnWrap.style.gap = '12px';
+  btnWrap.style.marginTop = '20px';
 
-    userState.username = newName;
-    updateStatsDisplay();
-    document.getElementById('profile-nickname').innerText = newName;
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'ranking-close-btn';
+  cancelBtn.textContent = '取消';
+  cancelBtn.style.flex = 1;
 
-    showAlert('✅ 修改成功！所有数据已同步更新');
+  const okBtn = document.createElement('button');
+  okBtn.className = 'ranking-close-btn';
+  okBtn.textContent = '确认修改';
+  okBtn.style.flex = 1;
 
-  } catch (err) {
-    console.error('修改失败', err);
-    showAlert('修改失败：' + err.message);
+  btnWrap.append(cancelBtn, okBtn);
+  content.append(h3, input, tip, btnWrap);
+  modal.append(content);
+  document.body.appendChild(modal);
+
+  // 动画弹出
+  setTimeout(() => modal.classList.add('active'), 10);
+
+  // 关闭
+  function close() {
+    modal.classList.remove('active');
+    setTimeout(() => modal.remove(), 300);
   }
+
+  cancelBtn.onclick = close;
+
+  // 确认修改
+  okBtn.onclick = async () => {
+    const newName = input.value.trim();
+    if (!newName) {
+      showAlert('昵称不能为空');
+      return;
+    }
+
+    close(); // 立刻关闭，不弹两次
+
+    try {
+      const user = AV.User.current();
+      const userId = user.id;
+
+      user.set('nickname', newName);
+      await user.save();
+
+      // 更新游戏日志
+      const logQuery = new AV.Query('GameLog');
+      logQuery.equalTo('userId', userId);
+      const log = await logQuery.first();
+      if (log) {
+        log.set('username', newName);
+        await log.save();
+      }
+
+      // 更新记录
+      const recordQuery = new AV.Query('GameRecord');
+      recordQuery.equalTo('userId', userId);
+      recordQuery.limit(1000);
+      const records = await recordQuery.find();
+      if (records.length > 0) {
+        records.forEach(r => r.set('username', newName));
+        await AV.Object.saveAll(records);
+      }
+
+      // 扣分
+      gameState.totalAccumulatedScore -= 100;
+      const logUpdate = AV.Object.createWithoutData('GameLog', gameState.gameLogId);
+      logUpdate.set('totalAccumulatedScore', gameState.totalAccumulatedScore);
+      await logUpdate.save();
+
+      // 同步界面
+      userState.username = newName;
+      updateStatsDisplay();
+      document.getElementById('profile-nickname').innerText = newName;
+
+      showAlert('✅ 修改成功！');
+    } catch (err) {
+      showAlert('❌ 修改失败：' + err.message);
+    }
+  };
 }
 
+
+// 保存游戏记录
 function saveGameRecord(score, length) {
-  validateUserExists();
+  if (!userState.isLogin) return;
+
   const Record = AV.Object.extend('GameRecord');
   const r = new Record();
   r.set('userId', userState.userId);
   r.set('username', userState.username);
   r.set('score', score);
   r.set('length', length);
-  r.save().catch(console.error);
+
+  r.save().then(async () => {
+    try {
+      const query = new AV.Query('GameRecord');
+      query.equalTo('userId', userState.userId);
+      query.descending('createdAt');
+      query.limit(100);
+      const list = await query.find();
+      if (list.length > 10) await AV.Object.destroyAll(list.slice(10));
+    } catch (e) {}
+  });
 }
