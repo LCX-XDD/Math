@@ -711,7 +711,7 @@ function initAdminBtn() {
     };
     
     go.onclick = () => {
-      window.open('https://console.leancloud.cn/apps/BEQfGnHF8BeBEFO88ViNPtKQ-gzGzoHsz/storage/data/_User', '_blank');
+      window.open('https://console.leancloud.cn/login', '_blank');
       cancel.onclick();
     };
   };
@@ -1084,7 +1084,7 @@ async function loadGameRecords() {
   }
 }
 
-// 修改昵称（修复重复弹窗 + 自定义动画弹窗）
+// 修改昵称（修复重复弹窗 + 自定义动画弹窗 + 重名检查）
 async function editNickname() {
   if (gameState.totalAccumulatedScore < 100) {
     showAlert('❌ 需要 100 分才能修改昵称');
@@ -1167,6 +1167,24 @@ async function editNickname() {
       return;
     }
 
+    // ==============================================
+    // 🔥 修复：检查昵称是否已存在（核心代码）
+    // ==============================================
+    try {
+      const query = new AV.Query(AV.User);
+      query.equalTo('nickname', newName);
+      const count = await query.count();
+
+      // 如果已经存在同名用户
+      if (count > 0) {
+        showAlert('❌ 该昵称已被使用，请换一个');
+        return;
+      }
+    } catch (e) {
+      showAlert('❌ 检查昵称失败，请重试');
+      return;
+    }
+
     close(); // 立刻关闭，不弹两次
 
     try {
@@ -1204,7 +1222,12 @@ async function editNickname() {
       // 同步界面
       userState.username = newName;
       updateStatsDisplay();
-      document.getElementById('profile-nickname').innerText = newName;
+document.getElementById('profile-nickname').innerText = newName;
+document.getElementById('profile-total-score').innerText = gameState.totalAccumulatedScore;
+document.getElementById('profile-total-games').innerText = gameState.totalGames;
+document.getElementById('profile-accuracy').innerText = gameState.accuracy + '%';
+
+
 
       showAlert('✅ 修改成功！');
     } catch (err) {
@@ -1212,6 +1235,7 @@ async function editNickname() {
     }
   };
 }
+
 
 
 // 保存游戏记录
