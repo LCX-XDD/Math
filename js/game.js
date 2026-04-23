@@ -711,7 +711,7 @@ function initAdminBtn() {
     };
     
     go.onclick = () => {
-      window.open('https://console.leancloud.cn/login', '_blank');
+      window.open('https://console.leancloud.cn/apps/BEQfGnHF8BeBEFO88ViNPtKQ-gzGzoHsz/storage/data/_User', '_blank');
       cancel.onclick();
     };
   };
