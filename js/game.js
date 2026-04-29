@@ -37,7 +37,7 @@ let loginAccount, loginPassword, registerName, registerAccount, registerPassword
 
 // 页面加载
 window.addEventListener('load', async () => {
-  // 一开始全局都隐藏，不会闪任何面板
+
   document.getElementById('login-modal').style.display = 'none';
   document.getElementById('game-container').style.display = 'none';
 
@@ -191,7 +191,7 @@ async function initAuth() {
     });
   }
 
-  initProfileBtn(); // ✅ 修复：在这里绑定个人中心点击事件！！！
+  initProfileBtn();
 }
 
 // 注册
@@ -311,6 +311,9 @@ async function handleLogout() {
     gameState.gameLogId = '';
     document.getElementById('game-container').style.display = 'none';
     document.getElementById('login-modal').style.display = 'flex';
+    if (loginAccount) loginAccount.value = '';
+    if (loginPassword) loginPassword.value = '';
+    document.getElementById('login-msg').textContent = '';
   } catch (error) {
     showAlert('退出失败');
   } finally {
@@ -471,7 +474,6 @@ function checkAnswer() {
   updateStatsDisplay();
   currentScoreEl.textContent = roundScore;
 
-  // ✅ 第一步：立刻保存你的答案（永久有效，不会丢失）
   const userAnswer = ans;
 
   gameState.isPlaying = false;
@@ -484,10 +486,8 @@ function checkAnswer() {
     gameState.countdownTimer = null;
   }
 
-  // ✅ 第二步：立刻弹出弹窗（答案已经保存，100%显示）
   showResultModal(full, correct, roundScore, len, userAnswer);
 
-  // ✅ 第三步：弹窗弹出后，延迟0.5秒数字框变问号
   setTimeout(() => {
     numberDisplay.textContent = '?';
   }, 500);
@@ -502,10 +502,8 @@ function updateStatsDisplay() {
 }
 
 function showResultModal(ok, correct, score, len, userAnswer) {
-  // 先清空旧弹窗
   document.querySelectorAll('.modal,.result-modal').forEach(x => x.remove());
 
-  // 创建弹窗（完全沿用你原来的结构，不会出错）
   const m = document.createElement('div'); 
   m.className = 'modal';
   const c = document.createElement('div'); 
@@ -516,7 +514,6 @@ function showResultModal(ok, correct, score, len, userAnswer) {
 
   const correctAnswer = gameState.targetNumber;
   let correctHtml = '', userHtml = '';
-  // 渲染答案（直接用传进来的userAnswer，不读取输入框）
   for (let i = 0; i < correctAnswer.length; i++) {
     correctHtml += `<span style="color:#10b981; font-weight:bold; margin:0 1px;">${correctAnswer[i]}</span>`;
     userHtml += `<span style="color:${userAnswer[i] === correctAnswer[i] ? '#10b981' : '#ef4444'}; font-weight:bold; margin:0 1px;">${userAnswer[i]}</span>`;
@@ -567,7 +564,6 @@ function showResultModal(ok, correct, score, len, userAnswer) {
   m.append(c); 
   document.body.append(m);
 
-  // 立刻执行弹出动画，不会延迟消失
   setTimeout(() => m.classList.add('active'), 10);
 }
 
@@ -608,7 +604,7 @@ function showAlert(msg) {
   setTimeout(() => a.classList.add('active'), 10);
 }
 
-// ====================== 管理员功能（已彻底删除删除用户！！！）======================
+// ====================== 管理员功能======================
 let isAdminMode = false;
 function initAdminBtn() {
   const go = document.getElementById('go-admin');
@@ -634,31 +630,30 @@ function initAdminBtn() {
       isAdminMode = false;
       document.getElementById('admin-panel').style.display = 'none';
       document.getElementById('login-modal').style.display = 'flex';
+      if (loginAccount) loginAccount.value = '';
+      if (loginPassword) loginPassword.value = '';
+      document.getElementById('login-msg').textContent = '';
       loading.style.display = 'none';
     }, 300);
   });
 
 
 
-     // 删除用户按钮（CSS统一样式+自适应字体+绝不换行+靠右布局）
+     // 删除用户按钮
   const deleteBtn = document.createElement('button');
   deleteBtn.innerText = '删除用户';
   deleteBtn.className = 'btn admin-delete-btn';
 
-  // 头部容器强制不换行
   const adminHeader = exit.parentElement;
   adminHeader.classList.add('admin-header');
 
-  // 按钮组容器强制同行不换行
   const btnGroup = document.createElement('div');
   btnGroup.classList.add('admin-header-buttons');
 
-  // 插入按钮顺序
   btnGroup.appendChild(deleteBtn);
   btnGroup.appendChild(exit);
   adminHeader.appendChild(btnGroup);
 
-  // 原有点击弹窗逻辑完全不变
   deleteBtn.onclick = () => {
     const modal = document.createElement('div');
     modal.className = 'ranking-modal';
@@ -683,18 +678,22 @@ function initAdminBtn() {
     
     const btnWrap = document.createElement('div');
     btnWrap.style.display = 'flex';
+    btnWrap.style.justifyContent = 'center'; // 居中
     btnWrap.style.gap = '10px';
     btnWrap.style.marginTop = '20px';
+    btnWrap.style.width = '100%';
     
     const cancel = document.createElement('button');
     cancel.className = 'ranking-close-btn';
     cancel.innerText = '取消';
     cancel.style.flex = 1;
+    cancel.style.maxWidth = '140px';
     
     const go = document.createElement('button');
     go.className = 'ranking-close-btn';
     go.innerText = '前往登录';
     go.style.flex = 1;
+    go.style.maxWidth = '140px';
     go.style.backgroundColor = '#6366f1';
     go.style.color = '#fff';
     
@@ -711,7 +710,7 @@ function initAdminBtn() {
     };
     
     go.onclick = () => {
-      window.open('https://console.leancloud.cn/login', '_blank');
+      window.open('https://console.leancloud.cn/apps/BEQfGnHF8BeBEFO88ViNPtKQ-gzGzoHsz/storage/data/_User', '_blank');
       cancel.onclick();
     };
   };
@@ -738,7 +737,6 @@ async function loadAllUserData() {
     listEl.innerHTML = '';
     result.forEach((item, idx) => {
       const tr = document.createElement('tr');
-      // 无删除用户按钮！！！只保留重置密码
       tr.innerHTML = `
         <td>${idx+1}</td><td>${item.nickname}</td><td>${item.account}</td>
         <td>${item.email||'未绑定'}</td><td>${item.score}</td><td>${item.games}</td>
@@ -754,7 +752,6 @@ async function loadAllUserData() {
 
 
 function showResetPwdModal(userId, username, account, email) {
-  // 排行榜同款弹窗结构
   const modal = document.createElement('div');
   modal.className = 'ranking-modal';
   modal.style.zIndex = 9999;
@@ -779,7 +776,6 @@ function showResetPwdModal(userId, username, account, email) {
     <div>账号：${account}</div>
   `;
 
-  // 邮箱：保留锁定只读，移除铅笔图标
   const emailWrap = document.createElement('div');
   emailWrap.style.display = 'flex';
   emailWrap.style.alignItems = 'center';
@@ -806,16 +802,19 @@ function showResetPwdModal(userId, username, account, email) {
   tip.style.marginTop = '8px';
   tip.textContent = '将发送重置链接到用户当前绑定邮箱，不可修改';
 
-  // 按钮组（样式完全统一）
+  // 按钮组
   const btnWrap = document.createElement('div');
   btnWrap.style.display = 'flex';
+  btnWrap.style.justifyContent = 'center'; // 居中
   btnWrap.style.gap = '12px';
   btnWrap.style.marginTop = '20px';
+  btnWrap.style.width = '100%';
 
   const cancelBtn = document.createElement('button');
   cancelBtn.className = 'ranking-close-btn';
   cancelBtn.textContent = '取消';
   cancelBtn.style.flex = 1;
+  cancelBtn.style.maxWidth = '140px';
   cancelBtn.style.borderRadius = '12px';
   cancelBtn.style.height = '48px';
   cancelBtn.style.fontSize = '16px';
@@ -827,6 +826,7 @@ function showResetPwdModal(userId, username, account, email) {
   sendBtn.className = 'ranking-close-btn';
   sendBtn.textContent = '确认发送';
   sendBtn.style.flex = 1;
+  sendBtn.style.maxWidth = '140px';
   sendBtn.style.borderRadius = '12px';
   sendBtn.style.height = '48px';
   sendBtn.style.fontSize = '16px';
@@ -839,10 +839,10 @@ function showResetPwdModal(userId, username, account, email) {
   modal.append(content);
   document.body.append(modal);
 
-  // 排行榜同款弹出动画
+
   setTimeout(() => modal.classList.add('active'), 10);
 
-  // 关闭当前弹窗
+
   function closeModal() {
     modal.classList.remove('active');
     setTimeout(() => modal.remove(), 300);
@@ -850,7 +850,7 @@ function showResetPwdModal(userId, username, account, email) {
 
   cancelBtn.onclick = closeModal;
 
-  // ====================== 自定义确认弹窗（排行榜同款，不再用浏览器alert） ======================
+  // ====================== 自定义确认弹窗 ======================
   function showConfirmSend() {
     const confirmModal = document.createElement('div');
     confirmModal.className = 'ranking-modal';
@@ -872,13 +872,16 @@ function showResetPwdModal(userId, username, account, email) {
 
     const confirmBtnWrap = document.createElement('div');
     confirmBtnWrap.style.display = 'flex';
+    confirmBtnWrap.style.justifyContent = 'center'; // 居中
     confirmBtnWrap.style.gap = '12px';
     confirmBtnWrap.style.marginTop = '20px';
+    confirmBtnWrap.style.width = '100%';
 
     const confirmCancel = document.createElement('button');
     confirmCancel.className = 'ranking-close-btn';
     confirmCancel.textContent = '取消';
     confirmCancel.style.flex = 1;
+    confirmCancel.style.maxWidth = '140px';
     confirmCancel.style.borderRadius = '12px';
     confirmCancel.style.height = '48px';
     confirmCancel.style.background = '#eef2fb';
@@ -889,6 +892,7 @@ function showResetPwdModal(userId, username, account, email) {
     confirmOk.className = 'ranking-close-btn';
     confirmOk.textContent = '确认发送';
     confirmOk.style.flex = 1;
+    confirmOk.style.maxWidth = '140px';
     confirmOk.style.borderRadius = '12px';
     confirmOk.style.height = '48px';
     confirmOk.style.background = '#6366f1';
@@ -902,7 +906,6 @@ function showResetPwdModal(userId, username, account, email) {
 
     setTimeout(() => confirmModal.classList.add('active'), 10);
 
-    // 关闭确认窗
     function closeConfirm() {
       confirmModal.classList.remove('active');
       setTimeout(() => confirmModal.remove(), 300);
@@ -910,12 +913,11 @@ function showResetPwdModal(userId, username, account, email) {
 
     confirmCancel.onclick = closeConfirm;
 
-    // 确认执行发送
     confirmOk.onclick = async () => {
       closeConfirm();
       try {
         await AV.User.requestPasswordReset(email);
-        // ====================== 发送成功弹窗（同样排行榜同款动画） ======================
+        // ====================== 发送成功弹窗 ======================
         const successModal = document.createElement('div');
         successModal.className = 'ranking-modal';
         successModal.style.zIndex = 10000;
@@ -924,10 +926,12 @@ function showResetPwdModal(userId, username, account, email) {
         successContent.className = 'ranking-content';
         successContent.style.padding = '24px';
         successContent.style.maxWidth = '380px';
+        successContent.style.textAlign = 'center'; // 文字+按钮居中
 
         const successTitle = document.createElement('h3');
         successTitle.textContent = '✅ 发送成功';
         successTitle.style.color = '#10b981';
+        successTitle.style.marginTop = '0';
 
         const successText = document.createElement('p');
         successText.style.marginTop = '12px';
@@ -935,11 +939,13 @@ function showResetPwdModal(userId, username, account, email) {
 
         const successBtnWrap = document.createElement('div');
         successBtnWrap.style.marginTop = '20px';
+        successBtnWrap.style.display = 'flex';
+        successBtnWrap.style.justifyContent = 'center';
 
         const successOk = document.createElement('button');
         successOk.className = 'ranking-close-btn';
         successOk.textContent = '确定';
-        successOk.style.width = '100%';
+        successOk.style.width = '160px';
         successOk.style.borderRadius = '12px';
         successOk.style.height = '48px';
         successOk.style.background = '#6366f1';
@@ -955,40 +961,50 @@ function showResetPwdModal(userId, username, account, email) {
         successOk.onclick = () => {
           successModal.classList.remove('active');
           setTimeout(() => successModal.remove(), 300);
-          closeModal(); // 关闭主面板
+          closeModal();
         };
 
       } catch (err) {
-        // 失败也是同款弹窗
         const errModal = document.createElement('div');
         errModal.className = 'ranking-modal';
         errModal.style.zIndex = 10000;
+
         const errContent = document.createElement('div');
         errContent.className = 'ranking-content';
         errContent.style.padding = '24px';
         errContent.style.maxWidth = '380px';
+        errContent.style.textAlign = 'center'; // 文字+按钮居中
+
         const errTitle = document.createElement('h3');
         errTitle.textContent = '❌ 发送失败';
         errTitle.style.color = '#ef4444';
+        errTitle.style.marginTop = '0';
+
         const errText = document.createElement('p');
         errText.style.marginTop = '12px';
         errText.textContent = err.message;
+
         const errBtnWrap = document.createElement('div');
         errBtnWrap.style.marginTop = '20px';
+        errBtnWrap.style.display = 'flex';
+        errBtnWrap.style.justifyContent = 'center';
+
         const errOk = document.createElement('button');
         errOk.className = 'ranking-close-btn';
         errOk.textContent = '确定';
-        errOk.style.width = '100%';
+        errOk.style.width = '160px';
         errOk.style.borderRadius = '12px';
         errOk.style.height = '48px';
         errOk.style.background = '#6366f1';
         errOk.style.color = '#fff';
         errOk.style.border = 'none';
+
         errBtnWrap.append(errOk);
         errContent.append(errTitle, errText, errBtnWrap);
         errModal.append(errContent);
         document.body.append(errModal);
         setTimeout(() => errModal.classList.add('active'), 10);
+        
         errOk.onclick = () => {
           errModal.classList.remove('active');
           setTimeout(() => errModal.remove(), 300);
@@ -997,27 +1013,24 @@ function showResetPwdModal(userId, username, account, email) {
     };
   }
 
-  // 点击发送打开确认弹窗
   sendBtn.onclick = showConfirmSend;
 }
 
 
 
 
-// ====================== 个人中心（已彻底修复点击报错！！！）======================
+// ====================== 个人中心======================
 function initProfileBtn() {
   document.getElementById('profile-btn').onclick = async () => {
     const modal = document.getElementById('profile-modal');
     const recordsEl = document.getElementById('profile-records');
 
-    // 赋值基础信息
     document.getElementById('profile-account').innerText = userState.account;
     document.getElementById('profile-nickname').innerText = userState.username;
     document.getElementById('profile-total-score').innerText = gameState.totalAccumulatedScore;
     document.getElementById('profile-total-games').innerText = gameState.totalGames;
     document.getElementById('profile-accuracy').innerText = gameState.accuracy + '%';
 
-    // 🔥 先显示【加载中动画】（和排行榜完全一样）
     recordsEl.innerHTML = `
       <div class="inner-loading">
         <div class="loading-spinner"></div>
@@ -1025,14 +1038,11 @@ function initProfileBtn() {
       </div>
     `;
 
-    // 🔥 先显示弹窗
     modal.style.display = 'flex';
     setTimeout(() => modal.classList.add('active'), 10);
 
-    // 🔥 异步加载记录（加载完自动替换）
     await loadGameRecords();
 
-    // 关闭逻辑
     document.getElementById('close-profile').onclick = () => {
       modal.classList.remove('active');
       setTimeout(() => {
@@ -1049,7 +1059,7 @@ function initProfileBtn() {
   });
 }
 
-// 加载游戏记录（修复异步报错）
+// 加载游戏记录
 async function loadGameRecords() {
   const container = document.getElementById('profile-records');
   container.innerHTML = `<div class="inner-loading"><div class="loading-spinner"></div>加载游戏记录中...</div>`;
@@ -1084,16 +1094,14 @@ async function loadGameRecords() {
   }
 }
 
-// 修改昵称（修复重复弹窗 + 自定义动画弹窗 + 重名检查）
+// 修改昵称
 async function editNickname() {
   if (gameState.totalAccumulatedScore < 100) {
     showAlert('❌ 需要 100 分才能修改昵称');
     return;
   }
 
-  // ------------------------------
-  // 自定义弹窗（和排行榜一样动画）
-  // ------------------------------
+  // 自定义弹窗
   const modal = document.createElement('div');
   modal.className = 'ranking-modal';
   modal.style.zIndex = 9999;
@@ -1148,10 +1156,10 @@ async function editNickname() {
   modal.append(content);
   document.body.appendChild(modal);
 
-  // 动画弹出
+
   setTimeout(() => modal.classList.add('active'), 10);
 
-  // 关闭
+ 
   function close() {
     modal.classList.remove('active');
     setTimeout(() => modal.remove(), 300);
@@ -1167,9 +1175,7 @@ async function editNickname() {
       return;
     }
 
-    // ==============================================
-    // 🔥 修复：检查昵称是否已存在（核心代码）
-    // ==============================================
+    // 检查昵称是否已存在
     try {
       const query = new AV.Query(AV.User);
       query.equalTo('nickname', newName);
@@ -1185,7 +1191,7 @@ async function editNickname() {
       return;
     }
 
-    close(); // 立刻关闭，不弹两次
+    close(); 
 
     try {
       const user = AV.User.current();

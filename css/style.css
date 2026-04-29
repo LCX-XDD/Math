@@ -30,7 +30,7 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* 全局变量 - 新增响应式相关变量 */
+
 :root {
     --primary: #6366f1;
     --primary-light: #818cf8;
